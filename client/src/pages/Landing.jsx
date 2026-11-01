@@ -20,52 +20,39 @@ export default function Landing() {
       <nav className="l-nav">
         <Link to="/" className="brand" style={{ padding: 0 }}><Logo size={34} /><div><div className="brand-name">EconoScope</div><div className="brand-sub">Goa pilot</div></div></Link>
         <div className="links">
-          <a href="#how">How it works</a><a href="#model">The model</a>
+          <a href="#how">{t('landing_nav_how')}</a><a href="#model">{t('landing_nav_model')}</a>
           <select
-            className="select sm"
-            style={{ width: 'auto', padding: '3px 8px', height: 30, fontSize: 12, background: 'var(--panel)', color: 'var(--text)', border: '1px solid var(--line)', borderRadius: 6 }}
+            className="select sm lang-selector"
+            style={{ width: 'auto', padding: '4px 10px', height: 32, fontSize: 13, fontWeight: 600, background: '#ffffff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 6, cursor: 'pointer' }}
             value={lang}
             onChange={(e) => setLang(e.target.value)}
             title="Change Language"
           >
             {LANGUAGES.map((l) => (
-              <option key={l.code} value={l.code}>
+              <option key={l.code} value={l.code} style={{ background: '#ffffff', color: '#0f172a' }}>
                 {l.native}
               </option>
             ))}
           </select>
           {user && <button className="btn ghost" onClick={logout}>Sign out</button>}
-          <Link to={appLink} className="btn primary">{user ? 'Open portal' : 'Sign in'}</Link>
+          <Link to={appLink} className="btn primary">{user ? t('landing_nav_open') : t('landing_nav_signin')}</Link>
         </div>
       </nav>
 
       <section className="l-section hero">
         <div>
-          <div style={{ marginBottom: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <span className="badge" style={{ background: 'rgba(2, 132, 199, 0.2)', color: '#38bdf8', borderColor: '#0ea5e9', fontWeight: 600 }}>
-              ⚓ Maritime Governance Edition
-            </span>
-            <span className="badge" style={{ background: 'rgba(20, 184, 166, 0.2)', color: '#2dd4bf', borderColor: '#14b8a6', fontWeight: 600 }}>
-              ⬡ Uber H3 Hexagonal Grid (Res 7)
-            </span>
-            <span className="badge" style={{ background: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b', borderColor: '#f59e0b', fontWeight: 600 }}>
-              ⚡ PWA Offline Mode Active
-            </span>
-          </div>
-          <h1>See where the economy is <em>growing, shrinking or missing</em> from the records.</h1>
-          <p className="lead">
-            EconoScope compares official business records with what satellites, tourism data and infrastructure show on the ground, zone by zone.
-            Every flag comes with a reason and a confidence score, and it never points at an individual business.
-          </p>
+
+          <h1>{t('hero_title_1')} <em>{t('hero_title_em')}</em> {t('hero_title_2')}</h1>
+          <p className="lead">{t('hero_lead')}</p>
           <div className="row" style={{ gap: 12 }}>
-            <Link to={appLink} className="btn primary">{user ? 'Open the portal →' : 'Sign in to the portal →'}</Link>
-            <a href="#model" className="btn">How the model works</a>
+            <Link to={appLink} className="btn primary">{user ? t('open_portal_arrow') : t('signin_portal_arrow')}</Link>
+            <a href="#model" className="btn">{t('how_model_works')}</a>
           </div>
           {preview && (
             <div className="row" style={{ gap: 32, marginTop: 34 }}>
-              <div><div className="l-stat" style={{ fontSize: 30 }}>{preview.stats.cells}</div><div className="small muted">zones monitored monthly</div></div>
-              <div><div className="l-stat" style={{ fontSize: 30, color: 'var(--amber)' }}>8</div><div className="small muted">data sources combined</div></div>
-              <div><div className="l-stat" style={{ fontSize: 30, color: 'var(--teal)' }}>{preview.stats.open_alerts}</div><div className="small muted">zones flagged for a closer look</div></div>
+              <div><div className="l-stat" style={{ fontSize: 30 }}>{preview.stats.cells}</div><div className="small muted">{t('zones_monitored')}</div></div>
+              <div><div className="l-stat" style={{ fontSize: 30, color: 'var(--amber)' }}>8</div><div className="small muted">{t('data_sources_combined')}</div></div>
+              <div><div className="l-stat" style={{ fontSize: 30, color: 'var(--teal)' }}>{preview.stats.open_alerts}</div><div className="small muted">{t('zones_flagged')}</div></div>
             </div>
           )}
         </div>
@@ -76,15 +63,15 @@ export default function Landing() {
             ) : <div className="loading" style={{ height: '100%' }}><div className="spinner" /></div>}
           </div>
           <div className="row between" style={{ marginTop: 10 }}>
-            <span className="small muted">Goa, latest month · demo data</span>
+            <span className="small muted">{t('goa_latest_demo')}</span>
             <div className="row" style={{ gap: 8 }}>
               <div className="seg">
-                <button className={gridShape === 'h3' ? 'on' : ''} onClick={() => setGridShape('h3')}>⬡ Hexagon H3</button>
-                <button className={gridShape === 'square' ? 'on' : ''} onClick={() => setGridShape('square')}>▦ Square</button>
+                <button className={gridShape === 'h3' ? 'on' : ''} onClick={() => setGridShape('h3')}>{t('hexagon_h3')}</button>
+                <button className={gridShape === 'square' ? 'on' : ''} onClick={() => setGridShape('square')}>{t('square_grid')}</button>
               </div>
               <div className="seg">
-                <button className={layer === 'eai' ? 'on' : ''} onClick={() => setLayer('eai')}>Activity</button>
-                <button className={layer === 'gap_z' ? 'on' : ''} onClick={() => setLayer('gap_z')}>Gap vs peers</button>
+                <button className={layer === 'eai' ? 'on' : ''} onClick={() => setLayer('eai')}>{t('activity')}</button>
+                <button className={layer === 'gap_z' ? 'on' : ''} onClick={() => setLayer('gap_z')}>{t('gap_vs_peers')}</button>
               </div>
             </div>
           </div>
@@ -92,31 +79,29 @@ export default function Landing() {
       </section>
 
       <section className="l-section" id="how">
-        <h2 className="l-title">How it works</h2>
-        <p className="muted" style={{ maxWidth: 680, marginBottom: 28 }}>Three steps, repeated every month.</p>
+        <h2 className="l-title">{t('how_it_works')}</h2>
+        <p className="muted" style={{ maxWidth: 680, marginBottom: 28 }}>{t('three_steps')}</p>
         <div className="grid g3">
-          {[['1', 'var(--amber)', 'Combine the data', 'Business registrations and survey counts are combined with night-time satellite lights, built-up area and tourism figures, added up to ~2.7 km zones across Goa.'],
-            ['2', 'var(--teal)', 'Compare with the records', 'Each zone is compared only with zones of the same kind. The model works out what should be on record there and flags zones that sit far from their peers, or are changing unusually fast.'],
-            ['3', 'var(--orange)', 'Check on the ground', 'Each flag carries its evidence and a confidence score. Field teams visit the top zones and a random control set, offer registration support, and their findings recalibrate the model.']].map(([n, c, t, d]) => (
+          {[['1', 'var(--amber)', t('step1_title'), t('step1_desc')],
+            ['2', 'var(--teal)', t('step2_title'), t('step2_desc')],
+            ['3', 'var(--orange)', t('step3_title'), t('step3_desc')]].map(([n, c, title, desc]) => (
             <div key={n} className="l-card">
               <div className="pill-num" style={{ background: c }}>{n}</div>
-              <h3 style={{ font: '700 19px var(--serif)', margin: '16px 0 8px' }}>{t}</h3>
-              <p className="muted">{d}</p>
+              <h3 style={{ font: '700 19px var(--serif)', margin: '16px 0 8px' }}>{title}</h3>
+              <p className="muted">{desc}</p>
             </div>
           ))}
         </div>
       </section>
 
       <section className="l-section" id="model">
-        <h2 className="l-title">What the model does</h2>
-        <p className="muted" style={{ maxWidth: 720, marginBottom: 28 }}>
-          In plain words: it works out how many businesses should be on record in each zone, given what can be observed there and in similar zones, and tells you where the records fall short or run ahead. It also says how sure it is.
-        </p>
+        <h2 className="l-title">{t('what_model_does_title')}</h2>
+        <p className="muted" style={{ maxWidth: 720, marginBottom: 28 }}>{t('what_model_does_desc')}</p>
         <ModelExplainer />
       </section>
 
       <section className="l-section">
-        <h2 className="l-title">Four kinds of alert</h2>
+        <h2 className="l-title">{t('four_alert_kinds')}</h2>
         <div className="grid g4" style={{ marginTop: 20 }}>
           {ALERT_KINDS.map(([t, c, d]) => (
             <div key={t} className="l-card" style={{ borderTop: `3px solid ${c}` }}>
@@ -129,8 +114,8 @@ export default function Landing() {
 
       <section className="l-section" style={{ textAlign: 'center' }}>
         <div className="l-card" style={{ padding: '40px 24px' }}>
-          <h2 className="l-title">Explore the Goa pilot</h2>
-          <p className="muted" style={{ marginBottom: 20 }}>Sign in with a demo account to browse the map, review alerts and record field validations.</p>
+          <h2 className="l-title">{t('explore_pilot')}</h2>
+          <p className="muted" style={{ marginBottom: 20 }}>{t('explore_pilot_desc')}</p>
           <Link to={appLink} className="btn primary">{user ? 'Open the portal →' : 'Sign in →'}</Link>
         </div>
       </section>
