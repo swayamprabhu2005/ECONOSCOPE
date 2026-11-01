@@ -14,12 +14,13 @@ export default function Admin() {
         <div><div className="eyebrow">Administration</div><h1>Users, detection settings and partner API</h1></div>
       </div>
       <div className="tabs" role="tablist">
-        {[['users', 'Users & roles'], ['settings', 'Detection settings'], ['api', 'Partner API keys']].map(([k, l]) => (
+        {[['users', 'Users & roles'], ['settings', 'Detection settings'], ['storage', 'Dual Storage Architecture'], ['api', 'Partner API keys']].map(([k, l]) => (
           <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>
         ))}
       </div>
       {tab === 'users' && <Users />}
       {tab === 'settings' && <Settings />}
+      {tab === 'storage' && <StorageTelemetry />}
       {tab === 'api' && <ApiKeys />}
       <p className="small muted">The audit log is under <Link to="/app/governance">Governance</Link>.</p>
     </div>
@@ -183,6 +184,55 @@ function ApiKeys() {
             ))}</tbody>
           </table></div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function StorageTelemetry() {
+  const { data, loading, error, reload } = useApi('/admin/storage');
+  if (loading && !data) return <Loading />;
+  if (error) return <ErrorBox>{error}</ErrorBox>;
+  return (
+    <div className="card">
+      <div className="card-head">
+        <div>
+          <h2>Dual Storage Engine Architecture</h2>
+          <p className="sub">Embedded SQLite 3 synchronous engine with Write-Ahead Logging (WAL) and memory-mapped query execution. No external database server required.</p>
+        </div>
+        <button className="btn sm" onClick={reload}>Refresh telemetry</button>
+      </div>
+      <div className="grid g3" style={{ marginTop: 12 }}>
+        <div className="card" style={{ background: 'var(--panel)', padding: 14 }}>
+          <div className="small muted">Database Engine</div>
+          <div className="strong" style={{ fontSize: 16, marginTop: 4 }}>{data.engine}</div>
+          <div className="small" style={{ color: 'var(--green)', marginTop: 4 }}>✓ Zero external dependencies</div>
+        </div>
+        <div className="card" style={{ background: 'var(--panel)', padding: 14 }}>
+          <div className="small muted">Concurrency Architecture</div>
+          <div className="strong" style={{ fontSize: 16, marginTop: 4 }}>{data.journalMode} Mode</div>
+          <div className="small muted" style={{ marginTop: 4 }}>Synchronous: {data.synchronous}</div>
+        </div>
+        <div className="card" style={{ background: 'var(--panel)', padding: 14 }}>
+          <div className="small muted">Integrity Status</div>
+          <div className="strong" style={{ fontSize: 16, marginTop: 4, color: 'var(--green)' }}>{data.integrity}</div>
+          <div className="small muted" style={{ marginTop: 4 }}>{data.tablesCount} schema tables active</div>
+        </div>
+      </div>
+      <div className="grid g2" style={{ marginTop: 12 }}>
+        <div className="card" style={{ background: 'var(--panel)', padding: 14 }}>
+          <div className="small muted">Primary Database Size</div>
+          <div className="strong" style={{ fontSize: 22, marginTop: 4 }}>{data.sizeFormatted}</div>
+          <div className="small muted" style={{ marginTop: 4 }}>Path: <code>{data.databasePath}</code></div>
+        </div>
+        <div className="card" style={{ background: 'var(--panel)', padding: 14 }}>
+          <div className="small muted">Write-Ahead Log (WAL) Buffer</div>
+          <div className="strong" style={{ fontSize: 22, marginTop: 4 }}>{data.walSizeFormatted}</div>
+          <div className="small muted" style={{ marginTop: 4 }}>Cache size: {data.cacheSize}</div>
+        </div>
+      </div>
+      <div className="note-box small" style={{ marginTop: 14 }}>
+        <strong>Architecture Notice:</strong> EconoScope employs a 100% self-contained SQLite architecture with Write-Ahead Logging (WAL) concurrency. All analytical aggregates, peer-group evaluations, and field validation queues are stored locally with zero external network database latency or credential exposure.
       </div>
     </div>
   );

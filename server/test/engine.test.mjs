@@ -6,6 +6,7 @@ import { buildPeerGroups } from '../src/engine/peers.js';
 import { localSpatial, changePoint, slope } from '../src/engine/spatial.js';
 import { simulateCounterfactual } from '../src/engine/engine.js';
 import { validateCsvPreflight } from '../src/datasets.js';
+import { getStorageTelemetry } from '../src/db.js';
 
 const rnd = mulberry32(1);
 const gauss = () => Math.sqrt(-2 * Math.log(Math.max(1e-9, rnd()))) * Math.cos(2 * Math.PI * rnd());
@@ -131,4 +132,13 @@ test('csv preflight validator identifies format and validates data structure', (
   const invalidCsv = 'unknown,headers,here\n1,2,3';
   const pfInvalid = validateCsvPreflight(invalidCsv);
   assert.equal(pfInvalid.valid, false);
+});
+
+test('storage telemetry reports native SQLite WAL architecture with zero dependencies', () => {
+  const telemetry = getStorageTelemetry();
+  assert.ok(telemetry.engine.includes('SQLite'));
+  assert.equal(telemetry.journalMode, 'WAL');
+  assert.equal(telemetry.externalDbRequired, false);
+  assert.equal(telemetry.zeroDependencyMode, true);
+  assert.ok(telemetry.tablesCount > 10);
 });

@@ -110,6 +110,50 @@ export default function Governance() {
           <MetricTile label="Flags held back" value={num(d.suppressedSingleSignal)} hint="supported by one signal or night lights only" />
           <MetricTile label="Sensitive zones" value={num(d.sensitive.length)} hint="need senior sign-off before a visit" />
         </div>
+
+        {d.circuitBreaker && (
+          <div className="card" style={{ borderLeft: d.circuitBreaker.active ? '4px solid #ef4444' : '4px solid #10b981', marginBottom: 16 }}>
+            <div className="row between" style={{ marginBottom: 8 }}>
+              <div className="row" style={{ gap: 8 }}>
+                <span style={{ fontSize: 20 }}>{d.circuitBreaker.active ? '🛑' : '🛡️'}</span>
+                <div>
+                  <h2 style={{ margin: 0 }}>Automated Disparity Rate Limiter (Bias Circuit Breaker)</h2>
+                  <div className="small muted">Algorithmic parity guardrail protecting volatile tourist & coastal belts from disproportionate inspection burdens.</div>
+                </div>
+              </div>
+              <span className="badge" style={{ background: d.circuitBreaker.active ? '#ef444422' : '#10b98122', color: d.circuitBreaker.active ? '#ef4444' : '#10b981', borderColor: 'currentColor', fontWeight: 600 }}>
+                {d.circuitBreaker.status}
+              </span>
+            </div>
+            <div className="grid g3" style={{ marginTop: 12 }}>
+              <div className="card" style={{ background: 'var(--panel)', padding: 12 }}>
+                <div className="small muted">Coastal / Tourism False Positive Rate</div>
+                <div className="strong" style={{ fontSize: 20, color: d.circuitBreaker.touristFpRate >= 0.3 ? '#ef4444' : 'var(--text)' }}>
+                  {pct(d.circuitBreaker.touristFpRate, 0, false)}
+                </div>
+                <div className="small muted">{d.circuitBreaker.touristCount} validations reviewed</div>
+              </div>
+              <div className="card" style={{ background: 'var(--panel)', padding: 12 }}>
+                <div className="small muted">Inland / Non-Tourism False Positive Rate</div>
+                <div className="strong" style={{ fontSize: 20 }}>
+                  {pct(d.circuitBreaker.inlandFpRate, 0, false)}
+                </div>
+                <div className="small muted">{d.circuitBreaker.inlandCount} validations reviewed</div>
+              </div>
+              <div className="card" style={{ background: 'var(--panel)', padding: 12 }}>
+                <div className="small muted">Parity Disparity Ratio</div>
+                <div className="strong" style={{ fontSize: 20, color: d.circuitBreaker.disparityRatio >= 1.35 ? '#ef4444' : 'var(--text)' }}>
+                  {d.circuitBreaker.disparityRatio.toFixed(2)}x
+                </div>
+                <div className="small muted">Maximum allowed: 1.35x</div>
+              </div>
+            </div>
+            <div className="note-box small" style={{ marginTop: 12, borderColor: d.circuitBreaker.active ? '#ef4444' : 'var(--border)' }}>
+              <strong>Policy Safeguard Action:</strong> {d.circuitBreaker.recommendation}
+              {d.circuitBreaker.dampeningOffset > 0 && <span style={{ display: 'block', marginTop: 4, color: '#f59e0b' }}>⚠️ Dynamic Threshold Offset of +{d.circuitBreaker.dampeningOffset}σ active on coastal candidate zones.</span>}
+            </div>
+          </div>
+        )}
         <BiasTable title="Flag rates by zone type" sub="A zone type flagged much more often than average, with no field confirmation behind it, must be reviewed before release." rows={d.byZone} label={(x) => ZONE_META[x] || x} overall={d.overall.rate} />
         <BiasTable title="Flag rates by data-quality tier" sub="Poor data should lead to 'insufficient data', not to more flags." rows={d.byQuality} overall={d.overall.rate} />
         <BiasTable title="Flag rates by peer group" sub="Peer groups encode judgement, so their flag rates are audited too." rows={d.byPeer} overall={d.overall.rate} />

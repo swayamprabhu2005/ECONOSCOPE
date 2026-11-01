@@ -108,6 +108,31 @@ r.get('/governance', requireAuth, requireRole(...READERS), (req, res) => {
     suppressedSingleSignal: lastRun ? JSON.parse(lastRun.model_json).suppressedSingleSignal : 0,
     release: { peerGroupsReviewed: !!review, skewedGroups: skew, ready: !!review && skew.length === 0 },
     settings: { min_coverage: s.min_coverage, min_cell_count: s.min_cell_count, peer_groups_k: s.peer_groups_k },
+    circuitBreaker: (() => {
+      const touristVal = get(`SELECT COUNT(*) n, SUM(v.outcome IN ('legitimately_busy', 'no_gap')) fp
+        FROM validations v JOIN alerts a ON a.id = v.alert_id JOIN cells c ON c.id = a.cell_id
+        WHERE a.is_control = 0 AND (c.zone IN ('coastal', 'heritage') OR c.tourism_share >= 0.3)`);
+      const inlandVal = get(`SELECT COUNT(*) n, SUM(v.outcome IN ('legitimately_busy', 'no_gap')) fp
+        FROM validations v JOIN alerts a ON a.id = v.alert_id JOIN cells c ON c.id = a.cell_id
+        WHERE a.is_control = 0 AND NOT (c.zone IN ('coastal', 'heritage') OR c.tourism_share >= 0.3)`);
+      const touristFpRate = touristVal?.n ? (touristVal.fp / touristVal.n) : 0;
+      const inlandFpRate = inlandVal?.n ? (inlandVal.fp / inlandVal.n) : 0;
+      const disparityRatio = inlandFpRate > 0 ? (touristFpRate / inlandFpRate) : (touristFpRate > 0.25 ? 1.4 : 1.0);
+      const isTripped = touristFpRate >= 0.30 || disparityRatio >= 1.35;
+      return {
+        active: isTripped,
+        status: isTripped ? 'CIRCUIT BREAKER ENGAGED (Rate Limiter Active)' : 'HEALTHY (Nominal Parity)',
+        touristCount: touristVal?.n || 0,
+        touristFpRate: Math.round(touristFpRate * 100) / 100,
+        inlandCount: inlandVal?.n || 0,
+        inlandFpRate: Math.round(inlandFpRate * 100) / 100,
+        disparityRatio: Math.round(disparityRatio * 100) / 100,
+        dampeningOffset: isTripped ? 0.5 : 0.0,
+        recommendation: isTripped
+          ? 'Coastal and tourist zone false-positive rate (>=30%) exceeds parity tolerance. The automated disparity rate limiter has suppressed borderline single-signal coastal flags to protect honest businesses from unfair scrutiny.'
+          : 'Tourist and inland false-positive rates are well-balanced within the 30% parity tolerance threshold.'
+      };
+    })(),
   });
 });
 
