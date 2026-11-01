@@ -1,12 +1,13 @@
 # EconoScope — Geospatial Economic Intelligence Platform (Goa Pilot)
 
 [![Engine Tests](https://img.shields.io/badge/Tests-11%20Passed-10b981.svg)]()
-[![Platform](https://img.shields.io/badge/Node.js-22.5%2B%20(Native%20SQLite)-0284c7.svg)]()
+[![Platform](https://img.shields.io/badge/Node.js-22.5%2B%20(Native%20SQLite%20WAL)-0284c7.svg)]()
 [![Spatial Engine](https://img.shields.io/badge/Grid-Uber%20H3%20Hexagonal%20Res%207-0d9488.svg)]()
-[![Theme](https://img.shields.io/badge/Theme-Maritime%20Governance-f59e0b.svg)]()
+[![Themes](https://img.shields.io/badge/Themes-Maritime%20Dark%20%7C%20Forest%20Sage%20Light-f59e0b.svg)]()
 [![Offline Mode](https://img.shields.io/badge/PWA-Service%20Worker%20Active-818cf8.svg)]()
+[![Bilingual](https://img.shields.io/badge/i18n-English%20%7C%20Hindi%20(हिन्दी)-276938.svg)]()
 
-> **Core Philosophy:** *A flag is a zone-level anomaly to validate, never an accusation against a business or individual. EconoScope shifts state capacity from arbitrary punitive raids to evidence-backed enterprise formalisation and trade facilitation.*
+> **Core Philosophy:** *A flag is a zone-level anomaly to validate, never an accusation against a business or individual. EconoScope shifts state capacity from arbitrary punitive raids to evidence-backed enterprise formalisation, spatial fairness, and trade facilitation.*
 
 Developed by **Team Chakravyuh** for **IDEAS 5.0 (Idea to Impact 2026)** at Padre Conceição College of Engineering (PCCE), Goa.
 
@@ -14,148 +15,109 @@ Developed by **Team Chakravyuh** for **IDEAS 5.0 (Idea to Impact 2026)** at Padr
 
 ## 1. What EconoScope Is & Why It Is Required
 
-In rapidly evolving regional economies like Goa, official enterprise registers (Udyam, GST, Municipal Trade Licences) often diverge substantially from on-the-ground economic reality:
-- Rapid tourism corridors (e.g., Arambol, Morjim, Mandrem) experience intense seasonal and unrecorded commercial activity.
-- Emerging logistics nodes and infrastructure developments (e.g., Manohar International Airport at Mopa) outpace traditional enumeration cadences.
-- Mining transition belts experience economic contraction that static decennial registries fail to reflect.
+Regional economies across Goa and India's coastal belts experience fast-moving commercial shifts that static decennial census records and annual tax registers fail to capture:
+- **Coastal Tourism Corridors:** Areas such as Arambol, Morjim, and Calangute see massive seasonal surges in hospitality, rentals, and retail that diverge from formal registrations.
+- **Fast-Growing Infrastructure Hubs:** The commissioning of Manohar International Airport at Mopa and expanding logistics corridors stimulate rapid commercial activity ahead of formal licensing enumeration.
+- **Economic Transition Zones:** Mining belt transitions in Sanguem and Quepem lead to localized economic contraction that historical records miss.
 
-Traditional approaches rely on blanket door-to-door surveys (costly, slow, and outdated within months) or punitive enforcement raids (which harm informal micro-enterprises and generate public friction).
+### The Problem with Traditional Enforcement
+- **Blanket Door-to-Door Surveys:** Cost tens of lakhs, take months to complete, and become obsolete before policy reports are published.
+- **Punitive Enforcement Raids:** Generate harassment, disproportionately impact vulnerable micro-enterprises, and produce adversarial friction between citizens and local government.
 
-**EconoScope** solves this by fusing independent high-cadence multimodal signals (satellite night lights, mobile digital density, commercial power points, business directory listings, and optical built-up indices) against official enterprise records across **549 spatial zones** covering the entire state of Goa. By standardising anomalies against **structurally peer-grouped zones** and applying **Empirical Bayes partial pooling**, the platform isolates true under-registration from natural commercial density.
+### The EconoScope Solution
+**EconoScope** partitions Goa into **549 spatial zones** (modeled as both Uber H3 Hexagons and Cartesian grids) and fuses multimodal independent signals against official business registers:
+1. **NOAA/NASA VIIRS Night-Time Lights** (proxy for electrified commercial activity)
+2. **Copernicus Sentinel-2 Built-Up Footprint** (physical infrastructure growth)
+3. **OpenStreetMap Commercial Infrastructure** (banks, substations, logistics points)
+4. **Tourism Footfall & Directory Density** (independent footfall and listings)
+5. **Commercial Power & Digital Transaction Density** (economic velocity)
 
----
-
-## 2. Key Enhancements & New Features
-
-### 4.1 Methodological & Algorithmic Enhancements
-- **Uber H3 Hexagonal Grid (Resolution 7):** Upgraded spatial partitioning from rigid cartesian squares to discrete hexagonal cells (~5.16 km² area, 1.22 km edge length). Hexagons eliminate cardinal adjacency distortion (all 6 neighbours equidistant) and prevent coastal boundary misalignment. The map interface includes a live toggle between Hexagonal and Square views.
-- **Counterfactual Policy Simulation:** Interactive policy tool on every zone page (and alert drawer) allowing planners to simulate the impact of targeted registration drives (e.g., $+10\%$, $+25\%$, $+50\%$). Dynamically models expected formal enterprise growth, peer-relative gap normalization, and estimated revenue yield under Goa Industrial Policy 2024.
-- **Empirical Bayes Partial Pooling:** Replaced static peer shrinkage with Gelman & Hill (2007) Empirical Bayes shrinkage. Zone group expectations are dynamically weighted based on sample size and variance ratio ($\lambda_j = \tau^2 / (\tau^2 + s_j^2 / n_j)$), preventing small clusters from distorting baseline thresholds.
-
-### 4.2 Data Ingestion & Pipeline Robustness
-- **Automated Satellite & Open Data Adapters:** Built-in modular adapters for **NASA VIIRS Black Marble** (night-time lights), **Copernicus Sentinel-2** (optical built-up index), and **OpenStreetMap Overpass** (commercial POIs, amenities, infrastructure). Includes programmatic sync triggers and live connectivity indicators.
-- **Schema-Enforced Multi-Format CSV Ingestion:** Robust preflight validator supporting both **long-format** (`cell_code, month, metric, value`) and **wide-format** (`cell_code, month, registered, night_light, ...`) CSV uploads with automated type validation, header verification, and instant row-level error reporting.
-
-### 4.3 Field Operations & UX Enhancements
-- **Progressive Web App (PWA) Offline Mode:** Equipped with Service Worker caching (`sw.js`), web app manifest, and local validation queues. Field officers operating in remote hinterlands (e.g., Netravali, Cotigao) can record complete field inspections offline; validations queue in `localStorage` and automatically synchronize once connectivity is restored.
-- **Multilingual Support (i18n):** Complete user-interface translation supporting **English**, **Konkani (कोंकणी - Goa)**, **Marathi (मराठी)**, and **Hindi (हिन्दी)** with instant one-click switching in the top navigation bar.
-- **Enhanced PDF Field Packs with GPS QR Codes:** Exportable field packs include dynamic QR codes that field officers can scan directly with smartphone cameras to launch Google Maps GPS navigation to the zone centroid, accompanied by structured verification checklists and senior sign-off blocks.
-
-### 4.4 Governance & Administrative Safeguards
-- **Automated Disparity Rate Limiter (Bias Circuit Breaker):** Continuous algorithmic guardrail that computes the false-positive ratio between volatile coastal/tourism zones and inland zones. If the tourism false-positive rate exceeds $30\%$ (or disparity ratio $\ge 1.35\times$), the circuit breaker trips, dynamically applying a $+0.5\sigma$ threshold dampening to prevent over-policing and harassment of seasonal trade.
-- **Granular Export Watermarking & Anti-Quota Throttling:** Every CSV and PDF export embeds cryptographic HMAC audit signatures, user timestamps, and statutory warnings. To prevent validation lists from becoming unmonitored harassment targets or punitive revenue quotas, exports are strictly throttled to **15 packs per hour per officer**.
-- **Dual-Storage SQLite Engine Architecture:** 100% native, zero-dependency storage utilizing Node.js 22 built-in `node:sqlite` with Write-Ahead Logging (WAL) concurrency, memory-mapped queries (`PRAGMA mmap_size`), and synchronous NORMAL mode. Strictly avoids external database overhead (no PostgreSQL required), operating with blazing speed (<5ms query times). Live telemetry is accessible via the Admin console.
-
-### 4.5 Bespoke Hybrid Theme: "Maritime Governance"
-- Replaces generic dark themes with an authoritative, coastal-institutional design system:
-  - **Abyssal Navy (`#090d16` / `#0f172a`):** Deep oceanic foundations reflecting maritime administrative depth.
-  - **Dark Marine Slate (`#1e293b` / `#243247`):** Refined panel elevations and cards.
-  - **Deep Sea Teal & Seafoam (`#0d9488` / `#14b8a6`):** Precision accent lines, buttons, and navigation anchors.
-  - **Civic Amber (`#f59e0b`):** High-visibility, accessible status badges, priority alerts, and calls to action.
-  - **Crisp High-Contrast Typography (`#f8fafc`):** Institutional clarity across tables, graphs, and tooltips.
+By comparing each zone **only against structurally similar peers** (via unsupervised peer grouping) and applying **Empirical Bayes partial pooling**, EconoScope isolates real registration gaps while rigorously accounting for natural commercial variance, seasonality, and data sparsity.
 
 ---
 
-## 3. Quick Start
+## 2. Comprehensive Platform Enhancements
 
-### Prerequisites
-- **Operating System:** Windows, macOS, or Linux.
-- **Runtime:** **Node.js 22.5+** (required for native `node:sqlite` support; no Python or C++ compiler required).
-- **RAM:** Minimum 2 GB (tested and optimized for lightweight 4 GB RAM laptops without discrete GPU).
+### 2.1 Methodological & Algorithmic Enhancements
+- **Uber H3 Hexagonal Grid (Resolution 7):** Integrated discrete global grid system (`h3-js` v4.5.0). Hexagons eliminate diagonal distance distortion (all 6 neighbours equidistant at 1.22 km edge length, ~5.16 km² area) and resolve coastal boundary quantization errors. The map interface features an instant toggle between Hexagonal and Square views.
+- **Counterfactual Policy Simulation Engine:** Interactive policy projection tool on every zone evidence card. Policymakers can adjust a simulated registration growth slider ($0\%$ to $+100\%$) to project residual gap normalization, estimated formalization ratio, and expected local municipal revenue yield.
+- **Empirical Bayes Partial Pooling:** Replaced static shrinkage with Gelman & Hill (2007) Empirical Bayes variance shrinkage ($\lambda_j = \tau^2 / (\tau^2 + s_j^2 / n_j)$). Zones in smaller or noisier peer groups are gracefully shrunk toward the state prior, preventing false-positive spikes in sparse clusters.
+
+### 2.2 Data Ingestion & Pipeline Robustness
+- **Automated Satellite & Open Data Adapters:** Modular ingestion adapters for NOAA VIIRS Black Marble radiance, Sentinel-2 NDBI built-up indices, and OpenStreetMap Overpass amenities.
+- **Schema-Enforced Multi-Format CSV Preflight Validator:** Pre-upload inspector supporting standard time-series, commercial registries, and satellite imagery feeds with automated column detection, type verification, and interactive error tables.
+
+### 2.3 Field Operations & UX Enhancements
+- **Progressive Web App (PWA) Offline Mode:** Equipped with Service Worker caching (`sw.js`, cache v2), web app manifest, and local IndexedDB/localStorage mutation queues. Field teams in remote hinterlands (e.g., Netravali, Cotigao) can record validations offline; actions automatically sync upon reconnecting.
+- **High-Contrast Bilingual Interface (English & Hindi):** End-to-end interface translation for **English** and **Hindi (हिन्दी)** across navigation, KPI metrics, priority queues, and field forms. Explicit contrast rules eliminate browser dropdown visibility issues on Windows and Chromium.
+- **Enhanced PDF Field Packs with GPS QR Codes:** Exportable field packs include dynamic QR codes that open smartphone turn-by-turn navigation directly to zone coordinates, alongside structured verification checklists and senior sign-off blocks for sensitive zones.
+
+### 2.4 Governance & Administrative Safeguards
+- **Automated Disparity Rate Limiter (Bias Circuit Breaker):** Continuous algorithmic monitor that prevents demographic or geographic over-policing by capping any taluka’s field visit allocation at $\le 2.5\times$ its population share.
+- **Granular Export Watermarking & Anti-Quota Throttling:** Cryptographic SHA-256 watermarks embedded in all exports, with strict rate limiting (5 downloads per 15-minute window) to prevent validation lists from becoming punitive quotas.
+- **Zero External Database Overhead (Native SQLite WAL):** Built entirely on Node.js 22 built-in `node:sqlite` with Write-Ahead Logging (WAL) concurrency and 64 MB memory cache. **No PostgreSQL, Redis, or external database services required.**
+
+### 2.5 Dual-Theme Visual System (Sun/Moon Toggle)
+- **Sun / Moon Toggle (`☀️ / 🌙`):** Accessible in the top navigation bar of both the public landing page and the administrative portal, with state persisted in `localStorage`.
+- **Dark Theme ("Maritime Governance"):** Deep abyssal navy canvas (`#0b1528`), marine slate cards (`#162a4a`), defined borders (`#26436f`), and oceanic accents.
+- **Light Theme ("Forest Canopy & Botanical Harmony" — 60-30-10 Rule):**
+  - **Strict Color Compliance:** NO stark white canvas, NO pure black text, NO blue, NO orange, NO terracotta brown, and NO red.
+  - **60% Surfaces:** Muted earthy sage-linen canvas (`#dbe4d7`) and organic ivory-sage panels (`#ebf2e8`).
+  - **30% Structure & Text:** Deep evergreen pine slate typography (`#192e1d`, >11:1 AAA contrast) and soft sage borders (`#b6c7b3`).
+  - **10% Accents:** Fern emerald green primary buttons (`#276938`), warm golden moss badges (`#9b7a14`), deep eucalyptus pine (`#366d58`), and royal mulberry plum berry (`#733c52`).
+  - **Component Harmony:** "How it works" cards, metric boxes, data tables, and Recharts SVG charts blend cohesively with the active background.
+
+---
+
+## 3. Quick Start Guide
+
+### System Requirements
+- **Node.js:** Version **22.5 or higher** (required for native `node:sqlite` engine).
+- **Hardware:** Runs smoothly on **4 GB RAM laptops with no discrete GPU** (server RAM footprint is under 150 MB).
+- **Database:** Zero setup needed — pre-seeded SQLite database with 549 zones and 36 months of data.
 
 ### One-Click Launch (Windows)
-Double-click `run.bat` or execute in terminal:
+Double-click `run.bat` or run from PowerShell / Command Prompt:
 ```cmd
 run.bat
 ```
-This batch script will automatically verify Node.js, install dependencies if missing, seed the 549-zone 36-month database, and launch both the API and Web UI.
+`run.bat` checks Node.js, installs dependencies if needed, ensures the demo database is seeded, and launches both the backend API and frontend portal concurrently.
 
 ### Manual Launch
 ```bash
-# 1. Install root, server, and client dependencies
+# 1. Install dependencies
 npm run setup
 
-# 2. Launch concurrently (API on :4000, Web UI on :5173)
+# 2. Run backend API (:4000) and frontend Vite dev server (:5173)
 npm run dev
 ```
 
-Visit **http://localhost:5173** in your browser.
+Open **http://localhost:5173** in your web browser.
+
+### Running Engine Verification Tests
+To run the full suite of 11 algorithmic, statistical, and storage tests:
+```bash
+node --disable-warning=ExperimentalWarning --test server/test/engine.test.mjs
+```
 
 ---
 
 ## 4. Demo Accounts & Credentials
 
-| Role | Email | Password | Primary Capabilities |
+The platform includes five pre-configured role-based accounts:
+
+| Role | Email | Password | Scope of Authority |
 |---|---|---|---|
-| **Administrator** | `admin@econoscope.in` | `admin123` | Full access; user management, storage engine telemetry, detection settings, sensitive zone sign-off |
-| **Policy Analyst** | `analyst@econoscope.in` | `analyst123` | Zone ranking, field task assignment, counterfactual simulations, CSV/PDF field pack export, engine execution |
-| **Field Officer (North)** | `field.north@econoscope.in` | `field123` | Assigned visit list for North Goa, offline PWA checklist, outcome submission |
-| **Field Officer (South)** | `field.south@econoscope.in` | `field123` | Assigned visit list for South Goa, offline PWA checklist, outcome submission |
-| **Formalisation Lead** | `planner@econoscope.in` | `planner123` | Read-only access, counterfactual policy modeling, enterprise outreach referrals |
-| **Auditor / Governance** | `auditor@econoscope.in` | `auditor123` | Read-only access, bias & coverage audit, disparity circuit breaker telemetry, peer-group review sign-off |
-
-A complete 7-minute competition presentation script is available in [DEMO.md](DEMO.md).
+| **Administrator** | `admin@econoscope.in` | `admin123` | Full administrative control, storage telemetry, user creation, sensitive zone sign-offs |
+| **Policy Analyst** | `analyst@econoscope.in` | `analyst123` | Priority ranking, field assignment, counterfactual simulations, CSV/PDF field pack export |
+| **Field Officer (North)** | `field.north@econoscope.in` | `field123` | North Goa assigned visits, PWA offline inspection checklist, ground outcome submission |
+| **Field Officer (South)** | `field.south@econoscope.in` | `field123` | South Goa assigned visits, PWA offline inspection checklist, ground outcome submission |
+| **Formalisation Lead** | `planner@econoscope.in` | `planner123` | Read-only portal view, counterfactual modeling, enterprise outreach referrals |
+| **Auditor / Governance** | `auditor@econoscope.in` | `auditor123` | Read-only audit log, bias circuit breaker telemetry, statistical lift & calibration review |
 
 ---
 
-## 5. System Architecture & Tech Stack
+## 5. Competition Resources
 
-```
-econoscope/
-├── client/                      # React 19 + Vite 6 Frontend
-│   ├── public/                  # PWA Manifest & Service Worker (sw.js)
-│   ├── src/
-│   │   ├── components/          # GridMap (Leaflet + H3), CounterfactualSim, Layout, UI
-│   │   ├── lib/                 # i18n translations, offline queue, auth, formatters
-│   │   └── pages/               # MapPage, Zones, AlertDetail, FieldTasks, Governance, Admin
-│   └── styles.css               # Maritime Governance Design System
-├── server/                      # Node.js 22 Express Backend
-│   ├── data/                    # econoscope.db (SQLite 3 with WAL mode)
-│   ├── src/
-│   │   ├── adapters/            # VIIRS Black Marble, Sentinel-2, OpenStreetMap adapters
-│   │   ├── engine/              # Robust Ridge, Empirical Bayes, Moran's I, Change-Point
-│   │   ├── routes/              # Core, Alerts (QR PDF), Data (CSV preflight), Governance
-│   │   ├── sim/                 # Deterministic synthetic data generator (H3 + Square)
-│   │   └── db.js                # Schema definitions, SQLite connection & storage telemetry
-│   └── test/                    # Node test runner suite (11 passing tests)
-├── updates.md                   # Detailed change log for Roadmap items 4.1–4.4
-├── run.bat                      # Windows one-click startup batch script
-└── DEMO.md                      # 7-minute judge presentation walkthrough
-```
-
----
-
-## 6. Model Training & Resource Profile
-
-- **Is Heavy Machine Learning Training Required?**
-  **No.** EconoScope uses closed-form, deterministic mathematical and statistical algorithms:
-  - **L2 Regularized Ridge Regression** with Huber iteratively reweighted least squares (IRLS).
-  - **Empirical Bayes shrinkage** (closed-form between/within variance weighting).
-  - **Local Moran's I / Getis-Ord Gi*** spatial autocorrelation with Monte Carlo permutation testing.
-  - **$k$-means++** clustering on normalized physical features.
-- **Resource Footprint:**
-  All algorithms run entirely within the lightweight Node.js event loop in pure JavaScript. Memory consumption is **under 150 MB RAM**, requiring **0% GPU** and negligible CPU overhead. It runs smoothly on modest hardware (e.g. 4 GB RAM dual-core laptop).
-- **Current State:** The database is already seeded with **36 historical monthly snapshots** across all **549 cells**. You do not need to perform any model training before running or presenting the platform.
-
----
-
-## 7. Verification & Testing
-
-To verify the analytical engine and safeguards, run:
-```bash
-npm test
-```
-All 11 unit tests execute in ~900ms:
-```
-ok 1 - median and robust z-scores ignore outliers
-ok 2 - ridge recovers a known linear relationship
-ok 3 - robust ridge is not dragged by contaminated zones
-ok 4 - seasonal index finds the seasonal shape and averages to 1
-ok 5 - peer groups separate structurally different zones and respect the minimum size
-ok 6 - local spatial statistics find a planted cluster and little else
-ok 7 - change-point detection finds a level shift and ignores noise
-ok 8 - counterfactual simulation calculates registration growth impact and normalisation targets
-ok 9 - empirical bayes pooling dynamically shrinks smaller groups more towards the grand mean
-ok 10 - csv preflight validator identifies format and validates data structure
-ok 11 - storage telemetry reports native SQLite WAL architecture with zero dependencies
-```
+- **Presentation Walkthrough:** See [DEMO.md](DEMO.md) for the complete 7-minute judged presentation narrative.
+- **Detailed Technical Changelog:** See [updates.md](updates.md) for in-depth documentation of all mathematical formulas, schema enhancements, and design tokens.
