@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './styles.css';
 import { AuthProvider, useAuth } from './lib/auth.jsx';
 import { ToastProvider, Loading } from './components/ui.jsx';
+import { I18nProvider } from './lib/i18n.jsx';
 import Layout from './components/Layout.jsx';
 import Landing from './pages/Landing.jsx';
 import Login from './pages/Login.jsx';
@@ -39,7 +40,8 @@ const FIELD = ['admin', 'analyst', 'field_officer'];
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <AuthProvider>
-      <ToastProvider>
+      <I18nProvider>
+        <ToastProvider>
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Landing />} />
@@ -62,6 +64,13 @@ createRoot(document.getElementById('root')).render(
           </Routes>
         </BrowserRouter>
       </ToastProvider>
+      </I18nProvider>
     </AuthProvider>
   </StrictMode>,
 );
+
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}

@@ -1,0 +1,17 @@
+{
+  "short_name": "EconoScope",
+  "name": "EconoScope - Geospatial Intelligence for Economic Registration",
+  "description": "Zone-level economic anomaly detection and validation platform",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192 512x512"
+    }
+  ],
+  "start_url": "/app",
+  "background_color": "#0f172a",
+  "theme_color": "#0d9488",
+  "display": "standalone",
+  "orientation": "any"
+}
