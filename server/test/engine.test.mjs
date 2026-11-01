@@ -1,7 +1,7 @@
 // Unit tests for the statistical building blocks. Run with: npm test
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { median, robustZ, ridge, robustRidge, seasonalIndex, mulberry32, dot } from '../src/engine/stats.js';
+import { median, robustZ, ridge, robustRidge, seasonalIndex, mulberry32, dot, empiricalBayesPooling } from '../src/engine/stats.js';
 import { buildPeerGroups } from '../src/engine/peers.js';
 import { localSpatial, changePoint, slope } from '../src/engine/spatial.js';
 import { simulateCounterfactual } from '../src/engine/engine.js';
@@ -103,4 +103,15 @@ test('counterfactual simulation calculates registration growth impact and normal
   assert.ok(sim.normalized, 'gap dropped below 1.0 sigma');
   assert.ok(sim.unitsToNormalize > 0, 'unitsToNormalize computed');
   assert.equal(simulateCounterfactual(null, 50, 0.3, 80), null);
+});
+
+test('empirical bayes pooling dynamically shrinks smaller groups more towards the grand mean', () => {
+  const largeGroup = Array.from({ length: 50 }, () => 0.6 + (Math.random() - 0.5) * 0.1);
+  const smallGroup = Array.from({ length: 4 }, () => 0.9 + (Math.random() - 0.5) * 0.1);
+  const eb = empiricalBayesPooling([largeGroup, smallGroup], 0);
+
+  assert.equal(eb.length, 2);
+  assert.ok(eb[0].shrinkage > eb[1].shrinkage, `large group shrinkage ${eb[0].shrinkage} should exceed small group shrinkage ${eb[1].shrinkage}`);
+  assert.ok(eb[0].offset > 0.5, 'large group offset is close to sample median');
+  assert.ok(eb[1].offset < 0.9, 'small group offset is shrunk towards 0');
 });
