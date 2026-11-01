@@ -1,3 +1,4 @@
+import CounterfactualSim from '../components/CounterfactualSim.jsx';
 import { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ResponsiveContainer, ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine, ReferenceArea } from 'recharts';
@@ -146,6 +147,17 @@ export default function AlertDetail() {
               <Link to={`/app/map?cell=${a.cell_id}&layer=${isChange ? 'change_z' : 'gap_z'}`}>Open on map →</Link>
             </div>
           </div>
+
+          {a.expected !== null && a.registered !== null && (
+            <CounterfactualSim
+              expected={a.expected}
+              registered={a.registered}
+              sigma={0.3}
+              confidence={a.confidence}
+              tier={a.priority}
+              zoneName={a.cell.name}
+            />
+          )}
 
           <div className="card">
             <div className="card-head"><h2>Outreach first</h2><span className="small muted">{OUTREACH_LABEL[a.outreach_status]}</span></div>

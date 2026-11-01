@@ -1,3 +1,4 @@
+import CounterfactualSim from '../components/CounterfactualSim.jsx';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ResponsiveContainer, ComposedChart, LineChart, Line, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine } from 'recharts';
@@ -69,6 +70,17 @@ export default function CellDetail() {
           <div className="hint">{insufficient ? 'insufficient data' : `priority ${num(last.priority, 2)} · district rank #${last.district_rank}`}</div></div>
         <div className="card stat"><div className="label">Data coverage (12 months)</div><div className="value">{pct(last.coverage, 0, false)}</div><div className="hint">minimum for a score: {pct(meta?.thresholds.min_coverage, 0, false)}</div></div>
       </div>
+
+      {!insufficient && last.expected !== null && last.registered !== null && (
+        <CounterfactualSim
+          expected={last.expected}
+          registered={last.registered}
+          sigma={peer?.traits?.sigma || 0.3}
+          confidence={last.confidence}
+          tier={last.tier}
+          zoneName={cell.name}
+        />
+      )}
 
       <div className="grid g-2-1">
         <div className="card">
