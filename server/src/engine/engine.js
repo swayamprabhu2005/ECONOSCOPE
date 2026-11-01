@@ -15,7 +15,7 @@
 
 import crypto from 'node:crypto';
 import { db, all, get, run, tx, getSettings, listMonths, log } from '../db.js';
-import { robustZ, ridge, robustRidge, dot, seasonalIndex, median, mean, clamp } from './stats.js';
+import { robustZ, ridge, robustRidge, dot, seasonalIndex, median, mean, clamp, empiricalBayesPooling } from './stats.js';
 import { buildPeerGroups, TRAITS } from './peers.js';
 import { localSpatial, changePoint, slope } from './spatial.js';
 
@@ -158,13 +158,19 @@ export function computeModel(asOf, settings = getSettings()) {
     const fit = robustRidge(train.map((i) => rows[i]), train.map((i) => y[i]), 1e-2);
     if (x === t) footprint = { beta: fit.beta, r2: fit.r2, n: train.length };
     const rawRes = rows.map((r, i) => dot(r, fit.beta) - y[i]);
+    const groupResiduals = groups.map((g, gi) => {
+      const mem = train.filter((i) => groupOf[i] === gi);
+      return mem.map((i) => rawRes[i]);
+    });
+    const eb = empiricalBayesPooling(groupResiduals, 0);
     groups.forEach((g, gi) => {
       const mem = train.filter((i) => groupOf[i] === gi);
-      const offset = mem.length ? (mem.length / (mem.length + PEER_POOLING)) * median(mem.map((i) => rawRes[i])) : 0;
+      const pooled = eb[gi];
+      const offset = pooled.offset;
       const resid = mem.map((i) => rawRes[i] - offset - (calib.get(cells[i].id) || 0));
       const med = median(resid) || 0;
       const sigma = mem.length > 3 ? Math.max(1.4826 * median(resid.map((v) => Math.abs(v - med))), SIGMA_FLOOR) : 0.3;
-      groupStats[gi][x] = { offset, sigma, n: mem.length };
+      groupStats[gi][x] = { offset, sigma, n: mem.length, shrinkage: pooled.shrinkage, tau2: pooled.tau2 };
     });
     const yoy = [], yoyR = [];
     for (let i = 0; i < N; i++) {

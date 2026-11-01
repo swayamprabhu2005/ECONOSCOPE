@@ -111,3 +111,36 @@ export function robustRidge(X, y, lambda = 1e-2, iters = 2) {
   fit.r2 = 1 - fit.residuals.reduce((s, v) => s + v * v, 0) / ssTot;
   return fit;
 }
+
+
+// Empirical Bayes hierarchical partial pooling for peer-group level estimation (Gelman & Hill 2007)
+// Computes within-group sample variance s_j^2, between-group variance tau^2, and shrinkage weights lambda_j
+export function empiricalBayesPooling(groupValues, grandPrior = 0) {
+  const stats = groupValues.map((vals) => {
+    const valid = vals.filter(Number.isFinite);
+    const n = valid.length;
+    if (!n) return { n: 0, med: 0, var: 0.09 };
+    const med = median(valid) || 0;
+    const mad = median(valid.map((v) => Math.abs(v - med))) || 0.1;
+    const s = Math.max(1.4826 * mad, 0.05);
+    return { n, med, var: s * s };
+  });
+
+  const validGroups = stats.filter((g) => g.n >= 3);
+  let tau2 = 0.04;
+  if (validGroups.length >= 2) {
+    const groupMeds = validGroups.map((g) => g.med);
+    const varBetween = sd(groupMeds) ** 2;
+    const avgWithinVar = mean(validGroups.map((g) => g.var / g.n));
+    tau2 = Math.max(0.005, varBetween - avgWithinVar);
+  }
+
+  return stats.map((g) => {
+    if (!g.n) return { offset: grandPrior, shrinkage: 0, tau2, sigma: 0.3, n: 0 };
+    const samplingVar = g.var / g.n;
+    const lambda = tau2 / (tau2 + samplingVar);
+    const offset = lambda * g.med + (1 - lambda) * grandPrior;
+    const sigma = Math.max(Math.sqrt(g.var), 0.1);
+    return { offset, shrinkage: +lambda.toFixed(3), tau2: +tau2.toFixed(4), sigma: +sigma.toFixed(3), n: g.n };
+  });
+}
