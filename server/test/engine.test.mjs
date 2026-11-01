@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { median, robustZ, ridge, robustRidge, seasonalIndex, mulberry32, dot } from '../src/engine/stats.js';
 import { buildPeerGroups } from '../src/engine/peers.js';
 import { localSpatial, changePoint, slope } from '../src/engine/spatial.js';
+import { simulateCounterfactual } from '../src/engine/engine.js';
 
 const rnd = mulberry32(1);
 const gauss = () => Math.sqrt(-2 * Math.log(Math.max(1e-9, rnd()))) * Math.cos(2 * Math.PI * rnd());
@@ -93,4 +94,13 @@ test('change-point detection finds a level shift and ignores noise', () => {
   assert.equal(changePoint([1, 2, 3]), null, 'too short a series gives no answer');
   assert.ok(slope([0, 1, 2, 3, 4, 5]) > 0.99 && slope([5, 4, NaN, 2, 1, 0]) < -0.9);
   assert.ok(Math.abs(dot([1, 2], [3, 4]) - 11) < 1e-12);
+});
+
+test('counterfactual simulation calculates registration growth impact and normalisation targets', () => {
+  const sim = simulateCounterfactual(100, 50, 0.3, 80, 50);
+  assert.equal(sim.simRegistered, 75);
+  assert.equal(sim.simGapAbs, 25);
+  assert.ok(sim.normalized, 'gap dropped below 1.0 sigma');
+  assert.ok(sim.unitsToNormalize > 0, 'unitsToNormalize computed');
+  assert.equal(simulateCounterfactual(null, 50, 0.3, 80), null);
 });

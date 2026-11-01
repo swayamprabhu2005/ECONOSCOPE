@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { all, get, run, log, listMonths, getSettings, ROLES } from '../db.js';
 import { requireAuth, requireRole, signToken, verifyPassword, publicUser, hashPassword } from '../auth.js';
-import { SIGNAL_META, ALERT_TYPES, TRAITS } from '../engine/engine.js';
+import { SIGNAL_META, ALERT_TYPES, TRAITS, simulateCounterfactual } from '../engine/engine.js';
 import { GOA_OUTLINE, TALUKAS } from '../sim/generator.js';
 
 const r = Router();
@@ -255,3 +255,19 @@ r.patch('/users/:id', requireAuth, requireRole('admin'), (req, res) => {
 });
 
 export default r;
+
+
+// Counterfactual simulation (PRD Section 6 & GIE WOW 5)
+r.get('/cells/:id/counterfactual', requireAuth, (req, res) => {
+  const cell = get('SELECT * FROM cells WHERE id = ?', req.params.id);
+  if (!cell) return res.status(404).json({ error: 'Zone not found' });
+  const latestMonth = get('SELECT MAX(month) m FROM cell_metrics')?.m;
+  const metric = get('SELECT * FROM cell_metrics WHERE cell_id = ? AND month = ?', cell.id, latestMonth);
+  if (!metric || metric.insufficient) return res.status(400).json({ error: 'Zone has insufficient data for counterfactual simulation' });
+  const peer = cell.peer_group_id ? get('SELECT traits_json FROM peer_groups WHERE id = ?', cell.peer_group_id) : null;
+  const traits = peer ? JSON.parse(peer.traits_json || '{}') : {};
+  const sigma = traits.sigma || 0.3;
+  const deltaPct = Number(req.query.increase ?? 20);
+  const result = simulateCounterfactual(metric.expected, metric.registered, sigma, metric.confidence, deltaPct);
+  res.json({ cell_id: cell.id, month: latestMonth, ...result });
+});

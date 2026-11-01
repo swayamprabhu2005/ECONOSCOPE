@@ -562,4 +562,35 @@ export function applyFeedback(alert, outcome) {
   return offset;
 }
 
+
+export function simulateCounterfactual(expected, registered, sigma, confidence, deltaPct = 0) {
+  if (expected === null || registered === null || !sigma) return null;
+  const factor = 1 + deltaPct / 100;
+  const simReg = Math.max(0, registered * factor);
+  const logExpected = Math.log1p(expected);
+  const simLogReg = Math.log1p(simReg);
+  const simRes = logExpected - simLogReg;
+  const simGapAbs = expected - simReg;
+  const simGapZ = simRes / sigma;
+  const simPriority = simGapZ * (confidence ?? 70) / 100;
+  const simTier = Math.abs(simGapAbs) < 25 ? 'low' : Math.abs(simPriority) >= 2.0 ? 'high' : Math.abs(simPriority) >= 1.1 ? 'medium' : 'low';
+
+  const targetLogReg = logExpected - sigma;
+  const targetReg = Math.max(0, Math.expm1(targetLogReg));
+  const unitsToNormalize = Math.max(0, Math.round(targetReg - registered));
+  const pctToNormalize = registered > 0 ? +((unitsToNormalize / registered) * 100).toFixed(1) : 0;
+
+  return {
+    deltaPct,
+    simRegistered: Math.round(simReg),
+    simGapAbs: Math.round(simGapAbs),
+    simGapZ: +simGapZ.toFixed(2),
+    simPriority: +simPriority.toFixed(2),
+    simTier,
+    unitsToNormalize,
+    pctToNormalize,
+    normalized: simGapZ <= 1.0,
+  };
+}
+
 export { TRAITS };
