@@ -20,7 +20,7 @@ export default function MapPage() {
   const [mode, setMode] = useState(params.get('mode') === 'shadow' ? 'shadow' : 'map');
   const [month, setMonth] = useState(null);
   const [basemap, setBasemap] = useState('dark');
-  const [gridShape, setGridShape] = useState('square');
+  const [gridShape, setGridShape] = useState('h3');
   const [showAlerts, setShowAlerts] = useState(true);
   const [mapData, setMapData] = useState(null);
   const [err, setErr] = useState('');

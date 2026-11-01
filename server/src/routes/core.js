@@ -47,8 +47,12 @@ r.post('/auth/password', requireAuth, (req, res) => {
 // ---------------- public preview (landing page) ----------------
 r.get('/public/preview', (req, res) => {
   const latest = get('SELECT MAX(month) m FROM cell_metrics')?.m;
-  const cells = all(`SELECT c.id, c.lat_min, c.lat_max, c.lon_min, c.lon_max, c.area_km2, ROUND(m.eai, 1) eai, ROUND(m.gap_z, 2) gap_z, m.insufficient
-    FROM cells c JOIN cell_metrics m ON m.cell_id = c.id AND m.month = ?`, latest);
+  const cells = all(`SELECT c.id, c.lat_min, c.lat_max, c.lon_min, c.lon_max, c.area_km2, c.h3_index, c.h3_boundary_json, ROUND(m.eai, 1) eai, ROUND(m.gap_z, 2) gap_z, m.insufficient
+    FROM cells c JOIN cell_metrics m ON m.cell_id = c.id AND m.month = ?`, latest).map((c) => ({
+      ...c,
+      h3_boundary: c.h3_boundary_json ? JSON.parse(c.h3_boundary_json) : null,
+      h3_boundary_json: undefined,
+    }));
   const stats = get(`SELECT COUNT(*) cells, (SELECT COUNT(*) FROM alerts WHERE status IN ('open','assigned') AND is_control = 0) open_alerts,
     (SELECT COUNT(*) FROM validations) validations FROM cells`);
   res.json({ latest, cells, stats });

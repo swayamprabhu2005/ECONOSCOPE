@@ -91,7 +91,7 @@ function Sync({ view, onView }) {
 
 export default function GridMap({
   cells, values, layer = 'eai', alerts = [], selectedId, onSelect, onAlertClick, height = 560, basemap = 'dark', outline, flyTo,
-  showAlerts = true, interactive = true, opacity = 0.74, legend = true, peerGroups = [], view, onView, title, gridShape = 'square',
+  showAlerts = true, interactive = true, opacity = 0.74, legend = true, peerGroups = [], view, onView, title, gridShape = 'h3',
 }) {
   const L_ = LAYERS[layer];
   const byId = useMemo(() => new Map((values || []).map((v) => [v.id, v])), [values]);

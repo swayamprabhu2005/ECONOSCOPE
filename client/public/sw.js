@@ -1,5 +1,5 @@
 // EconoScope Service Worker for Field Operations Offline Support
-const CACHE_NAME = 'econoscope-pwa-v1';
+const CACHE_NAME = 'econoscope-pwa-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -46,7 +46,21 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Stale-while-revalidate for static assets
+  // Network-first for HTML page navigation so fresh updates always load immediately
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          return response;
+        })
+        .catch(() => caches.match('/index.html').then((cached) => cached || caches.match('/')))
+    );
+    return;
+  }
+
+  // Stale-while-revalidate for static assets (images, fonts)
   event.respondWith(
     caches.match(event.request).then((cached) => {
       const fetchPromise = fetch(event.request)
