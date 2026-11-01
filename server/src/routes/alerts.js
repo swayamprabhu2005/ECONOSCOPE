@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import PDFDocument from 'pdfkit';
+import QRCode from 'qrcode';
 import { all, get, run, log, tx } from '../db.js';
 import { requireAuth, requireRole } from '../auth.js';
 import { applyFeedback, ALERT_TYPES, RECALIBRATING } from '../engine/engine.js';
@@ -84,28 +85,70 @@ r.get('/alerts/export.csv', requireAuth, requireRole(...READERS), (req, res) => 
 });
 
 const ascii = (s) => String(s ?? '').replace(/σ/g, ' sigma').replace(/[–—]/g, '-').replace(/[“”]/g, '"').replace(/[’‘]/g, "'").replace(/…/g, '...').replace(/[^\x20-\x7E\n]/g, '');
-r.get('/alerts/export.pdf', requireAuth, requireRole(...READERS), (req, res) => {
-  const rows = exportRows(req).slice(0, 80);
+r.get('/alerts/export.pdf', requireAuth, requireRole(...READERS), async (req, res) => {
+  const rows = exportRows(req).slice(0, 60);
   log(req.user.id, 'export.validation_list', 'alert', null, { format: 'pdf', rows: rows.length, filters: req.query });
   res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', 'attachment; filename="econoscope-validation-list.pdf"');
-  const doc = new PDFDocument({ size: 'A4', margin: 46 });
+  res.setHeader('Content-Disposition', 'attachment; filename="econoscope-validation-pack.pdf"');
+  const doc = new PDFDocument({ size: 'A4', margin: 40 });
   doc.pipe(res);
-  doc.font('Helvetica-Bold').fontSize(17).text('EconoScope validation list');
-  doc.font('Helvetica').fontSize(9).fillColor('#555').text(`Generated ${new Date().toISOString().slice(0, 10)} by ${ascii(req.user.name)} - ${rows.length} zone flag(s)`);
-  doc.moveDown(0.6).fillColor('#8a4b00').font('Helvetica-Bold').fontSize(9).text(ascii(DISCLAIMER));
-  doc.font('Helvetica').text('Outreach first: offer registration support alongside every validation visit. Enforcement decisions sit with officials, outside EconoScope.');
-  doc.fillColor('#000');
-  if (!rows.length) doc.moveDown().fontSize(11).text('No flags match the selected filters.');
+
+  // Document Header
+  doc.font('Helvetica-Bold').fontSize(18).text('EconoScope Field Validation Pack');
+  doc.font('Helvetica').fontSize(8.5).fillColor('#475569').text(`Generated on ${new Date().toISOString().slice(0, 10)} by ${ascii(req.user.name)} · ${rows.length} Actionable Field Pack(s)`);
+  doc.moveDown(0.4).fillColor('#9a3412').font('Helvetica-Bold').fontSize(8.5).text(ascii(DISCLAIMER));
+  doc.font('Helvetica').fontSize(8).fillColor('#334155').text('Outreach First Policy: Offer Udyam & trade facilitation guidance before any enforcement action. GPS QR codes provided for direct field navigation.');
+  doc.moveDown(0.8).fillColor('#000');
+
+  if (!rows.length) doc.fontSize(11).text('No flags match the selected filters.');
+
   for (const a of rows) {
-    if (doc.y > 660) doc.addPage();
-    doc.moveDown(0.9);
-    doc.font('Helvetica-Bold').fontSize(11).text(ascii(`${a.zone} - ${a.taluka}, ${a.district}`), { continued: true }).font('Helvetica').fontSize(9).fillColor('#555').text(`   ${a.code}`);
-    doc.fillColor('#000').fontSize(9).text(ascii(`${a.type} | priority tier: ${a.tier} | confidence ${Math.round(a.confidence)}/100 (${a.confidence_band}) | data coverage ${Math.round((a.coverage || 0) * 100)}% | peer group: ${a.peer_group || '-'}`));
-    doc.text(ascii(`Registered ${Math.round(a.registered)} | expected ${Math.round(a.expected)} (range ${Math.round(a.exp_lo)}-${Math.round(a.exp_hi)}) | peer-relative gap ${a.gap_z?.toFixed(1)} sigma${a.sensitive ? ' | SENSITIVE ZONE: senior sign-off required' : ''}`));
-    doc.moveDown(0.25).font('Helvetica-Oblique').text(ascii(`Why: ${a.reason}`), { width: 500 });
-    doc.font('Helvetica');
-    for (const c of JSON.parse(a.checks_json || '[]')) doc.text(ascii(`[ ] ${c}`), { indent: 10, width: 490 });
+    if (doc.y > 620) doc.addPage();
+    const startY = doc.y;
+
+    // Draw card box
+    doc.roundedRect(36, startY, 522, 175, 4).strokeColor('#cbd5e1').lineWidth(0.8).stroke();
+
+    // Zone Title & Code
+    doc.font('Helvetica-Bold').fontSize(12).fillColor('#0f172a').text(ascii(`${a.zone} (${a.taluka}, ${a.district})`), 46, startY + 10);
+    doc.font('Helvetica').fontSize(8.5).fillColor('#64748b').text(ascii(`Zone Code: ${a.code} · ${a.type} · Priority Tier: ${a.tier?.toUpperCase()}`), 46, startY + 25);
+
+    // Metrics summary
+    doc.font('Helvetica').fontSize(8).fillColor('#1e293b').text(
+      ascii(`Registered: ${Math.round(a.registered)} | Expected: ~${Math.round(a.expected)} (range ${Math.round(a.exp_lo)}-${Math.round(a.exp_hi)}) | Gap: ${a.gap_z?.toFixed(1)} sigma | Confidence: ${Math.round(a.confidence)}/100`),
+      46, startY + 38
+    );
+
+    // Why explanation
+    doc.font('Helvetica-Oblique').fontSize(8).fillColor('#475569').text(ascii(`Observation: ${a.reason}`), 46, startY + 50, { width: 370 });
+
+    // Checklists
+    doc.font('Helvetica-Bold').fontSize(8.5).fillColor('#0f172a').text('Field Officer Checklist:', 46, startY + 74);
+    doc.font('Helvetica').fontSize(8).fillColor('#334155');
+    let cy = startY + 86;
+    for (const c of JSON.parse(a.checks_json || '[]').slice(0, 3)) {
+      doc.rect(48, cy + 1, 7, 7).strokeColor('#64748b').stroke();
+      doc.text(ascii(c), 60, cy, { width: 355 });
+      cy += 14;
+    }
+
+    // Generate GPS navigation QR code
+    try {
+      const navUrl = `https://maps.google.com/?q=${a.lat || 15.35},${a.lon || 74.02}`;
+      const qrBuffer = await QRCode.toBuffer(navUrl, { width: 75, margin: 1 });
+      doc.image(qrBuffer, 460, startY + 14, { width: 62, height: 62 });
+      doc.font('Helvetica').fontSize(7).fillColor('#64748b').text('Scan for GPS Nav', 460, startY + 79, { width: 62, align: 'center' });
+    } catch (e) {
+      // QR fallback
+    }
+
+    // Signature Block
+    doc.font('Helvetica').fontSize(7.5).fillColor('#64748b');
+    doc.text('Field Officer Signature: _____________________', 46, startY + 152);
+    doc.text('Date: ____________', 270, startY + 152);
+    doc.text('Supervising Sign-off: _____________________', 370, startY + 152);
+
+    doc.y = startY + 185;
   }
   doc.end();
 });

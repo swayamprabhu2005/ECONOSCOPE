@@ -3,6 +3,8 @@ import { NavLink, Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth, can } from '../lib/auth.jsx';
 import { api } from '../lib/api.js';
 import { ROLE_META, TYPE_META, monthName } from '../lib/format.js';
+import { useI18n, LANGUAGES } from '../lib/i18n.jsx';
+import { getOfflineQueue, isOnline, flushOfflineQueue } from '../lib/offline.js';
 
 export const Logo = ({ size = 30 }) => (
   <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
@@ -20,6 +22,36 @@ const initials = (n) => n.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpp
 
 export default function Layout() {
   const { user, logout } = useAuth();
+  const { lang, setLang, t } = useI18n();
+  const [online, setOnline] = useState(isOnline());
+  const [offlineQueue, setOfflineQueue] = useState(getOfflineQueue());
+  const [syncing, setSyncing] = useState(false);
+
+  useEffect(() => {
+    const handleNet = () => {
+      setOnline(navigator.onLine);
+      setOfflineQueue(getOfflineQueue());
+    };
+    window.addEventListener('online', handleNet);
+    window.addEventListener('offline', handleNet);
+    const interval = setInterval(() => setOfflineQueue(getOfflineQueue()), 4000);
+    return () => {
+      window.removeEventListener('online', handleNet);
+      window.removeEventListener('offline', handleNet);
+      clearInterval(interval);
+    };
+  }, []);
+
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      const res = await flushOfflineQueue();
+      setOfflineQueue(getOfflineQueue());
+      if (res.synced > 0) refreshMeta();
+    } finally {
+      setSyncing(false);
+    }
+  };
   const [meta, setMeta] = useState(null);
   const [open, setOpen] = useState(false);
   const [counts, setCounts] = useState({});
@@ -48,24 +80,24 @@ export default function Layout() {
         <aside className={`sidebar ${open ? 'open' : ''}`}>
           <Link to="/app" className="brand"><Logo /><div><div className="brand-name">EconoScope</div><div className="brand-sub">Goa pilot</div></div></Link>
           <nav className="nav" aria-label="Main">
-            <div className="nav-label">Monitor</div>
-            {reader && <NavLink to="/app" end>◉ Overview</NavLink>}
-            <NavLink to="/app/map">▦ Activity map</NavLink>
-            {reader && <NavLink to="/app/zones">≡ Zone priorities</NavLink>}
-            {reader && <NavLink to="/app/alerts">⚑ Flags {counts.alerts ? <span className="count">{counts.alerts}</span> : null}</NavLink>}
-            {can(user, 'admin', 'analyst', 'field_officer') && <NavLink to="/app/field">✓ Field tasks {counts.tasks ? <span className="count">{counts.tasks}</span> : null}</NavLink>}
+            <div className="nav-label">{t('priority')} Monitor</div>
+            {reader && <NavLink to="/app" end>◉ {t('overview')}</NavLink>}
+            <NavLink to="/app/map">▦ {t('activity_map')}</NavLink>
+            {reader && <NavLink to="/app/zones">≡ {t('zone_priorities')}</NavLink>}
+            {reader && <NavLink to="/app/alerts">⚑ {t('flags')} {counts.alerts ? <span className="count">{counts.alerts}</span> : null}</NavLink>}
+            {can(user, 'admin', 'analyst', 'field_officer') && <NavLink to="/app/field">✓ {t('field_tasks')} {counts.tasks ? <span className="count">{counts.tasks}</span> : null}</NavLink>}
             {reader && <>
               <div className="nav-label">Intelligence</div>
-              <NavLink to="/app/analytics">◔ Analytics & model</NavLink>
-              <NavLink to="/app/governance">⚖ Governance</NavLink>
-              <NavLink to="/app/data">⛁ Data & pipeline</NavLink>
+              <NavLink to="/app/analytics">◔ {t('analytics')}</NavLink>
+              <NavLink to="/app/governance">⚖ {t('governance')}</NavLink>
+              <NavLink to="/app/data">⛁ {t('data_pipeline')}</NavLink>
             </>}
             {can(user, 'admin') && <>
-              <div className="nav-label">Administration</div>
+              <div className="nav-label">{t('admin')}</div>
               <NavLink to="/app/admin">⚙ Users & settings</NavLink>
             </>}
             <div className="nav-label">About</div>
-            <NavLink to="/app/method">ⓘ Methodology</NavLink>
+            <NavLink to="/app/method">ⓘ {t('methodology')}</NavLink>
           </nav>
           <div className="sidebar-foot">
             <div className="user-chip">
@@ -84,6 +116,30 @@ export default function Layout() {
             <button className="btn ghost sm menu-btn" onClick={() => setOpen(true)} aria-label="Open menu">☰</button>
             <div className="small muted">Data through <strong style={{ color: 'var(--text)' }}>{meta ? monthName(meta.latest) : '…'}</strong></div>
             <div className="spacer" />
+            {!online && (
+              <span className="badge" style={{ background: '#ef444422', color: '#ef4444', border: '1px solid #ef444444', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#ef4444' }}></span>
+                {t('offline_mode')}
+              </span>
+            )}
+            {offlineQueue.length > 0 && (
+              <button className="btn sm" onClick={handleSync} disabled={syncing || !online} style={{ background: 'var(--amber)', color: '#000', fontWeight: 600 }}>
+                {syncing ? 'Syncing...' : `⚡ ${t('sync_now')} (${offlineQueue.length})`}
+              </button>
+            )}
+            <select
+              className="select sm"
+              style={{ width: 'auto', padding: '2px 8px', height: 28, fontSize: 12, background: 'var(--card)', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: 6 }}
+              value={lang}
+              onChange={(e) => setLang(e.target.value)}
+              title="Change Language"
+            >
+              {LANGUAGES.map((l) => (
+                <option key={l.code} value={l.code}>
+                  {l.native}
+                </option>
+              ))}
+            </select>
             {meta?.synthetic && <span className="synthetic-pill" title="Seeded demo data shaped like the real sources. Upload real datasets under Data & pipeline.">Demo dataset (synthetic)</span>}
             {reader && (
               <div style={{ position: 'relative' }}>

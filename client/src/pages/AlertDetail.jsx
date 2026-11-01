@@ -7,6 +7,7 @@ import { useMeta } from '../components/Layout.jsx';
 import { SignalEvidence, ConfidenceBreakdown } from '../components/Evidence.jsx';
 import GridMap from '../components/GridMap.jsx';
 import { api } from '../lib/api.js';
+import { saveOfflineValidation } from '../lib/offline.js';
 import { useAuth, can } from '../lib/auth.jsx';
 import { num, pct, sigma, monthName, monthShort, confBand, TYPE_META, OUTCOME_META, OUTCOME_HELP, ACTION_META, ZONE_META, ago } from '../lib/format.js';
 
@@ -204,7 +205,7 @@ export default function AlertDetail() {
 
       {modal === 'assign' && <AssignModal alert={a} needsSignoff={needsSignoff} onClose={() => setModal(null)} onSave={(uid, note) => patch({ assigned_to: uid, note }, 'Field team assigned')} />}
       {modal === 'dismiss' && <DismissModal onClose={() => setModal(null)} onSave={(outcome, note) => patch({ status: 'dismissed', outcome, note }, 'Flag closed')} gapType={!isChange && !control} />}
-      {modal === 'validate' && <ValidateModal alert={a} onClose={() => setModal(null)} onDone={(r) => done(r.recalibrated ? 'Outcome recorded. The baseline for this zone was recalibrated.' : 'Outcome recorded. Thank you!')} />}
+      {modal === 'validate' && <ValidateModal alert={a} onClose={() => setModal(null)} onDone={(r) => done(r?.offline ? 'Validation saved offline in local queue. Will sync automatically when back online!' : r?.recalibrated ? 'Outcome recorded. The baseline for this zone was recalibrated.' : 'Outcome recorded. Thank you!')} />}
     </div>
   );
 }
@@ -262,7 +263,22 @@ function ValidateModal({ alert, onClose, onDone }) {
   );
   const submit = async (e) => {
     e.preventDefault(); setBusy(true); setErr('');
-    try { onDone(await api(`/alerts/${alert.id}/validations`, { method: 'POST', body: f })); } catch (x) { setErr(x.message); } finally { setBusy(false); }
+    try {
+      if (!navigator.onLine) {
+        saveOfflineValidation(alert.id, f);
+        onDone({ recalibrated: false, offline: true });
+        return;
+      }
+      const res = await api(`/alerts/${alert.id}/validations`, { method: 'POST', body: f });
+      onDone(res);
+    } catch (x) {
+      if (!navigator.onLine || x.message?.toLowerCase().includes('network') || x.message?.toLowerCase().includes('fetch')) {
+        saveOfflineValidation(alert.id, f);
+        onDone({ recalibrated: false, offline: true });
+        return;
+      }
+      setErr(x.message);
+    } finally { setBusy(false); }
   };
   return (
     <Modal title={`Field outcome · ${alert.code}`} onClose={onClose} width={560}>
