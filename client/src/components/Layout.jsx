@@ -8,10 +8,10 @@ import { getOfflineQueue, isOnline, flushOfflineQueue } from '../lib/offline.js'
 
 export const Logo = ({ size = 30 }) => (
   <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
-    <rect width="32" height="32" rx="7" fill="#0f172a" stroke="#334155" strokeWidth="1" />
-    <circle cx="14" cy="14" r="7.5" fill="none" stroke="#f59e0b" strokeWidth="2.6" />
-    <path d="M19.5 19.5 26 26" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round" />
-    <circle cx="14" cy="14" r="2.4" fill="#14b8a6" />
+    <rect width="32" height="32" rx="7" fill="#0284c7" />
+    <circle cx="14" cy="14" r="7.5" fill="none" stroke="#ffffff" strokeWidth="2.6" />
+    <path d="M19.5 19.5 26 26" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" />
+    <circle cx="14" cy="14" r="2.4" fill="#f59e0b" />
   </svg>
 );
 
@@ -80,23 +80,23 @@ export default function Layout() {
         <aside className={`sidebar ${open ? 'open' : ''}`}>
           <Link to="/app" className="brand"><Logo /><div><div className="brand-name">EconoScope</div><div className="brand-sub">Goa pilot</div></div></Link>
           <nav className="nav" aria-label="Main">
-            <div className="nav-label">{t('priority')} Monitor</div>
+            <div className="nav-label">{t('priority_monitor')}</div>
             {reader && <NavLink to="/app" end>◉ {t('overview')}</NavLink>}
             <NavLink to="/app/map">▦ {t('activity_map')}</NavLink>
             {reader && <NavLink to="/app/zones">≡ {t('zone_priorities')}</NavLink>}
             {reader && <NavLink to="/app/alerts">⚑ {t('flags')} {counts.alerts ? <span className="count">{counts.alerts}</span> : null}</NavLink>}
             {can(user, 'admin', 'analyst', 'field_officer') && <NavLink to="/app/field">✓ {t('field_tasks')} {counts.tasks ? <span className="count">{counts.tasks}</span> : null}</NavLink>}
             {reader && <>
-              <div className="nav-label">Intelligence</div>
+              <div className="nav-label">{t('intelligence')}</div>
               <NavLink to="/app/analytics">◔ {t('analytics')}</NavLink>
               <NavLink to="/app/governance">⚖ {t('governance')}</NavLink>
               <NavLink to="/app/data">⛁ {t('data_pipeline')}</NavLink>
             </>}
             {can(user, 'admin') && <>
-              <div className="nav-label">{t('admin')}</div>
+              <div className="nav-label">{t('administration')}</div>
               <NavLink to="/app/admin">⚙ Users & settings</NavLink>
             </>}
-            <div className="nav-label">About</div>
+            <div className="nav-label">{t('about')}</div>
             <NavLink to="/app/method">ⓘ {t('methodology')}</NavLink>
           </nav>
           <div className="sidebar-foot">
@@ -107,14 +107,14 @@ export default function Layout() {
                 <div className="small muted">{ROLE_META[user.role]}{user.taluka ? ` · ${user.taluka}` : ''}</div>
               </div>
             </div>
-            <button className="btn sm" style={{ width: '100%', marginTop: 10 }} onClick={signOut}>Sign out</button>
+            <button className="btn sm" style={{ width: '100%', marginTop: 10 }} onClick={signOut}>{t('sign_out')}</button>
           </div>
         </aside>
         {open && <div className="modal-bg" style={{ zIndex: 1100, background: 'rgba(0,0,0,.4)' }} onClick={() => setOpen(false)} />}
         <div className="main">
           <header className="topbar">
             <button className="btn ghost sm menu-btn" onClick={() => setOpen(true)} aria-label="Open menu">☰</button>
-            <div className="small muted">Data through <strong style={{ color: 'var(--text)' }}>{meta ? monthName(meta.latest) : '…'}</strong></div>
+            <div className="small muted">{t('data_through')} <strong style={{ color: 'var(--text)' }}>{meta ? monthName(meta.latest) : '…'}</strong></div>
             <div className="spacer" />
             {!online && (
               <span className="badge" style={{ background: '#ef444422', color: '#ef4444', border: '1px solid #ef444444', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -128,19 +128,19 @@ export default function Layout() {
               </button>
             )}
             <select
-              className="select sm"
-              style={{ width: 'auto', padding: '2px 8px', height: 28, fontSize: 12, background: 'var(--card)', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: 6 }}
+              className="select sm lang-selector"
+              style={{ width: 'auto', padding: '4px 10px', height: 32, fontSize: 13, fontWeight: 600, background: '#ffffff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 6, cursor: 'pointer' }}
               value={lang}
               onChange={(e) => setLang(e.target.value)}
               title="Change Language"
             >
               {LANGUAGES.map((l) => (
-                <option key={l.code} value={l.code}>
+                <option key={l.code} value={l.code} style={{ background: '#ffffff', color: '#0f172a' }}>
                   {l.native}
                 </option>
               ))}
             </select>
-            {meta?.synthetic && <span className="synthetic-pill" title="Seeded demo data shaped like the real sources. Upload real datasets under Data & pipeline.">Demo dataset (synthetic)</span>}
+            {meta?.synthetic && <span className="synthetic-pill" title="Seeded demo data shaped like the real sources. Upload real datasets under Data & pipeline.">{t('demo_dataset')}</span>}
             {reader && (
               <div style={{ position: 'relative' }}>
                 <button className="btn sm" onClick={() => setBell(!bell)} aria-label={`Notifications: ${notes?.rows.length || 0}`} aria-expanded={bell}>
@@ -160,7 +160,7 @@ export default function Layout() {
               </div>
             )}
             <span className="small muted topbar-user">{user.name} · {ROLE_META[user.role]}</span>
-            <button className="btn sm" onClick={signOut}>⎋ Sign out</button>
+            <button className="btn sm" onClick={signOut}>⎋ {t('sign_out')}</button>
           </header>
           <Outlet />
         </div>

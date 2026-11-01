@@ -141,16 +141,17 @@ The platform was upgraded across five core pillars without compromising any exis
 
 ---
 
-## 6. Theme Implementation: "Maritime Governance"
+## 6. Theme Implementation: "Civic Slate Medium-Light Hybrid"
 
-The generic dark theme was replaced with a bespoke design system created during the theme factory analysis:
+To provide optimal executive readability without harsh pure-white glare or heavy dark-mode shadows, the visual system was upgraded to a **Civic Slate Medium-Light Hybrid** design:
 
-- **Abyssal Navy (`#090d16` / `#0f172a`):** Deep oceanic backgrounds providing visual grounding.
-- **Dark Marine Slate (`#1e293b` / `#243247`):** High-clarity elevated cards, dialogs, and table surfaces.
-- **Slate Borders (`#334155` / `#475569`):** Subdued, accessible dividers replacing stark outlines.
-- **Deep Sea Teal (`#0d9488` / `#14b8a6`):** Primary interactive elements, brand iconography, and positive indicators.
-- **Civic Amber (`#f59e0b`):** High-visibility action buttons, priority alert badges, and warning states.
-- **Oceanic White (`#f8fafc`):** High-contrast typography optimized for accessibility and readability.
+- **Soft Cool Slate Canvas (`#eef2f6`):** Balanced, institutional background tone sitting comfortably between extreme dark and stark white.
+- **Pure White Cards & Surfaces (`#ffffff`):** Crisp elevated cards and table containers with soft diffused shadows (`0 4px 20px rgba(15, 23, 42, 0.08)`).
+- **High-Contrast Dark Navy Slate Typography (`#0f172a`):** Maximum readability across metrics, headers, and descriptions.
+- **Slate Borders (`#cbd5e1` / `#94a3b8`):** Clean, defined borders replacing dark dividers.
+- **Civic Sky & Teal Accents (`#0284c7` / `#0d9488`):** Vibrant interactive gradients on primary buttons and active navigation links.
+- **Civic Amber (`#d97706`):** High-visibility priority flags, badges, and warning indicators.
+- **Bilingual Interface Focus:** Clean high-contrast dropdown switcher restricted to **English** and **Hindi (हिन्दी)** with full end-to-end interface translation.
 
 ---
 

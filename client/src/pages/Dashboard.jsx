@@ -1,9 +1,11 @@
+import { useI18n } from '../lib/i18n.jsx';
 import { Link, useNavigate } from 'react-router-dom';
 import { ResponsiveContainer, ComposedChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, Cell } from 'recharts';
 import { useApi, Loading, ErrorBox, Stat, TierBadge, TypeBadge, StatusBadge, TrendBadge, SensitiveBadge, Confidence, ChartTip } from '../components/ui.jsx';
 import { num, pct, compact, monthShort, monthName, TYPE_META, TIER_META, ACTION_META, ago } from '../lib/format.js';
 
 export default function Dashboard() {
+  const { t } = useI18n();
   const { data: d, error, loading } = useApi('/dashboard');
   const nav = useNavigate();
   if (loading && !d) return <Loading />;
@@ -20,31 +22,31 @@ export default function Dashboard() {
     <div className="page">
       <div className="page-head">
         <div>
-          <div className="eyebrow">Overview · {monthName(d.latest)}</div>
-          <h1>Where do records and activity diverge?</h1>
-          <p className="sub">{d.zones} zones across 12 talukas · each compared with zones of the same kind</p>
+          <div className="eyebrow">{t('overview')} · {monthName(d.latest)}</div>
+          <h1>{t('overview_title')}</h1>
+          <p className="sub">{t('overview_sub').replace('{zones}', d.zones)}</p>
         </div>
         <div className="row">
-          <Link to="/app/map?mode=shadow" className="btn">Shadow map</Link>
-          <Link to="/app/zones" className="btn primary">Plan this month's visits</Link>
+          <Link to="/app/map?mode=shadow" className="btn">{t('shadow_map')}</Link>
+          <Link to="/app/zones" className="btn primary">{t('plan_visits')}</Link>
         </div>
       </div>
 
       <div className="grid g4">
-        <Stat accent="orange" label="High-priority zones" value={num(d.tiers.high || 0)}
-          hint={<>{d.tiers.medium || 0} medium · <Link to="/app/zones?tier=high">see ranked list</Link></>} />
-        <Stat accent="amber" label="New or widening gaps" value={num(d.emerging)}
-          hint={<Link to="/app/zones?trend=growing">emergence view</Link>} />
-        <Stat accent="violet" label="Zones with insufficient data" value={num(d.tiers.insufficient || 0)}
-          hint={`${pct(scored / d.zones, 0, false)} of zones carry a score`} />
-        <Stat accent="teal" label="Field hit rate vs random" value={lift === null ? '—' : `${num(lift, 1)}×`}
-          hint={d.hitRate === null ? 'no validations yet' : <>{pct(d.hitRate, 0, false)} prioritised vs {pct(d.controlRate, 0, false)} control</>} />
+        <Stat accent="orange" label={t('high_priority_zones')} value={num(d.tiers.high || 0)}
+          hint={<>{d.tiers.medium || 0} {t('medium_zones')} · <Link to="/app/zones?tier=high">{t('see_ranked_list')}</Link></>} />
+        <Stat accent="amber" label={t('new_widening_gaps')} value={num(d.emerging)}
+          hint={<Link to="/app/zones?trend=growing">{t('emergence_view')}</Link>} />
+        <Stat accent="violet" label={t('insufficient_data_zones')} value={num(d.tiers.insufficient || 0)}
+          hint={`${pct(scored / d.zones, 0, false)} ${t('zones_carry_score')}`} />
+        <Stat accent="teal" label={t('field_hit_rate')} value={lift === null ? '—' : `${num(lift, 1)}×`}
+          hint={d.hitRate === null ? t('no_validations_yet') : <>{pct(d.hitRate, 0, false)} {t('prioritised_vs_control')} {pct(d.controlRate, 0, false)}</>} />
       </div>
 
       <div className="grid g-2-1">
         <div className="card">
           <div className="card-head">
-            <div><h2>Registered vs expected footprint</h2><p className="sub">Statewide totals for scored zones. The expected line is what independent signals suggest should be on record.</p></div>
+            <div><h2>{t('reg_vs_expected')}</h2><p className="sub">{t('reg_vs_expected_sub')}</p></div>
           </div>
           <div style={{ height: 280 }}>
             <ResponsiveContainer>
@@ -63,7 +65,7 @@ export default function Dashboard() {
           <p className="small muted">Statewide the two lines sit close together by design: the model looks for zones that depart from their peers, not for a statewide shortfall. {compact(last.registered)} units on record in {monthName(d.latest)}.</p>
         </div>
         <div className="card">
-          <div className="card-head"><div><h2>Zones by priority tier</h2><p className="sub">Priority = peer-relative gap × confidence</p></div></div>
+          <div className="card-head"><div><h2>{t('zones_by_tier')}</h2><p className="sub">{t('priority_formula')}</p></div></div>
           <div style={{ height: 150 }}>
             <ResponsiveContainer>
               <BarChart data={tierData} layout="vertical" margin={{ left: 10, right: 30 }}>
@@ -76,7 +78,7 @@ export default function Dashboard() {
             </ResponsiveContainer>
           </div>
           <div className="divider" style={{ margin: '10px 0' }} />
-          <h3 style={{ marginBottom: 4 }}>{open} open flags by type</h3>
+          <h3 style={{ marginBottom: 4 }}>{open} {t('open_flags_by_type')}</h3>
           <div style={{ height: 130 }}>
             <ResponsiveContainer>
               <BarChart data={typeData} layout="vertical" margin={{ left: 10, right: 30 }}>
