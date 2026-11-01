@@ -91,7 +91,7 @@ function Sync({ view, onView }) {
 
 export default function GridMap({
   cells, values, layer = 'eai', alerts = [], selectedId, onSelect, onAlertClick, height = 560, basemap = 'dark', outline, flyTo,
-  showAlerts = true, interactive = true, opacity = 0.74, legend = true, peerGroups = [], view, onView, title,
+  showAlerts = true, interactive = true, opacity = 0.74, legend = true, peerGroups = [], view, onView, title, gridShape = 'square',
 }) {
   const L_ = LAYERS[layer];
   const byId = useMemo(() => new Map((values || []).map((v) => [v.id, v])), [values]);
@@ -116,10 +116,13 @@ export default function GridMap({
           const val = v && !noScore ? L_.get(v, c.area_km2, c) : null;
           const empty = val === null || val === undefined;
           const sel = c.id === selectedId;
+          const isH3 = gridShape === 'h3' && c.h3_boundary && c.h3_boundary.length;
+          const ShapeComponent = isH3 ? Polygon : Rectangle;
+          const shapeProps = isH3 ? { positions: c.h3_boundary } : { bounds: [[c.lat_min, c.lon_min], [c.lat_max, c.lon_max]] };
           return (
-            <Rectangle key={c.id} bounds={[[c.lat_min, c.lon_min], [c.lat_max, c.lon_max]]}
+            <ShapeComponent key={c.id} {...shapeProps}
               pathOptions={{
-                color: sel ? '#ffffff' : 'rgba(0,0,0,0.25)', weight: sel ? 2 : 0.4,
+                color: sel ? '#ffffff' : 'rgba(0,0,0,0.25)', weight: sel ? 2.5 : 0.4,
                 fillColor: empty ? INSUFFICIENT : L_.color(val), fillOpacity: empty ? 0.5 : opacity, dashArray: undefined,
               }}
               eventHandlers={interactive ? { click: () => onSelect?.(c) } : undefined}>
@@ -136,7 +139,7 @@ export default function GridMap({
                   )}
                 </Tooltip>
               )}
-            </Rectangle>
+            </ShapeComponent>
           );
         })}
         {showAlerts && alerts.map((a) => (
