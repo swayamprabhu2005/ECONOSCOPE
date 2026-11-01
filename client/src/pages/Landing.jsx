@@ -1,3 +1,4 @@
+import { useI18n, LANGUAGES } from '../lib/i18n.jsx';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Logo } from '../components/Layout.jsx';
@@ -7,8 +8,10 @@ import { useAuth } from '../lib/auth.jsx';
 
 export default function Landing() {
   const { user, logout } = useAuth();
+  const { lang, setLang, t } = useI18n();
   const [preview, setPreview] = useState(null);
   const [layer, setLayer] = useState('eai');
+  const [gridShape, setGridShape] = useState('h3');
   useEffect(() => { fetch('/api/public/preview').then((r) => r.json()).then(setPreview).catch(() => {}); }, []);
   const appLink = user ? '/app' : '/login';
 
@@ -18,6 +21,19 @@ export default function Landing() {
         <Link to="/" className="brand" style={{ padding: 0 }}><Logo size={34} /><div><div className="brand-name">EconoScope</div><div className="brand-sub">Goa pilot</div></div></Link>
         <div className="links">
           <a href="#how">How it works</a><a href="#model">The model</a>
+          <select
+            className="select sm"
+            style={{ width: 'auto', padding: '3px 8px', height: 30, fontSize: 12, background: 'var(--panel)', color: 'var(--text)', border: '1px solid var(--line)', borderRadius: 6 }}
+            value={lang}
+            onChange={(e) => setLang(e.target.value)}
+            title="Change Language"
+          >
+            {LANGUAGES.map((l) => (
+              <option key={l.code} value={l.code}>
+                {l.native}
+              </option>
+            ))}
+          </select>
           {user && <button className="btn ghost" onClick={logout}>Sign out</button>}
           <Link to={appLink} className="btn primary">{user ? 'Open portal' : 'Sign in'}</Link>
         </div>
@@ -25,6 +41,17 @@ export default function Landing() {
 
       <section className="l-section hero">
         <div>
+          <div style={{ marginBottom: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <span className="badge" style={{ background: 'rgba(2, 132, 199, 0.2)', color: '#38bdf8', borderColor: '#0ea5e9', fontWeight: 600 }}>
+              ⚓ Maritime Governance Edition
+            </span>
+            <span className="badge" style={{ background: 'rgba(20, 184, 166, 0.2)', color: '#2dd4bf', borderColor: '#14b8a6', fontWeight: 600 }}>
+              ⬡ Uber H3 Hexagonal Grid (Res 7)
+            </span>
+            <span className="badge" style={{ background: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b', borderColor: '#f59e0b', fontWeight: 600 }}>
+              ⚡ PWA Offline Mode Active
+            </span>
+          </div>
           <h1>See where the economy is <em>growing, shrinking or missing</em> from the records.</h1>
           <p className="lead">
             EconoScope compares official business records with what satellites, tourism data and infrastructure show on the ground, zone by zone.
@@ -45,14 +72,20 @@ export default function Landing() {
         <div>
           <div className="hero-map">
             {preview ? (
-              <GridMap cells={preview.cells} values={preview.cells} layer={layer} height="100%" interactive={false} showAlerts={false} opacity={0.8} />
+              <GridMap cells={preview.cells} values={preview.cells} layer={layer} gridShape={gridShape} height="100%" interactive={false} showAlerts={false} opacity={0.8} />
             ) : <div className="loading" style={{ height: '100%' }}><div className="spinner" /></div>}
           </div>
           <div className="row between" style={{ marginTop: 10 }}>
             <span className="small muted">Goa, latest month · demo data</span>
-            <div className="seg">
-              <button className={layer === 'eai' ? 'on' : ''} onClick={() => setLayer('eai')}>Activity</button>
-              <button className={layer === 'gap_z' ? 'on' : ''} onClick={() => setLayer('gap_z')}>Gap vs peers</button>
+            <div className="row" style={{ gap: 8 }}>
+              <div className="seg">
+                <button className={gridShape === 'h3' ? 'on' : ''} onClick={() => setGridShape('h3')}>⬡ Hexagon H3</button>
+                <button className={gridShape === 'square' ? 'on' : ''} onClick={() => setGridShape('square')}>▦ Square</button>
+              </div>
+              <div className="seg">
+                <button className={layer === 'eai' ? 'on' : ''} onClick={() => setLayer('eai')}>Activity</button>
+                <button className={layer === 'gap_z' ? 'on' : ''} onClick={() => setLayer('gap_z')}>Gap vs peers</button>
+              </div>
             </div>
           </div>
         </div>
