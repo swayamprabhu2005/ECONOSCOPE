@@ -3,7 +3,8 @@ import multer from 'multer';
 import { all, get, log, getSettings, saveSettings, DEFAULT_SETTINGS } from '../db.js';
 import { requireAuth, requireRole } from '../auth.js';
 import { runEngine } from '../engine/engine.js';
-import { ingestNextMonth, importObservationsCsv } from '../datasets.js';
+import { ingestNextMonth, importObservationsCsv, validateCsvPreflight } from '../datasets.js';
+import { getAdaptersStatus, syncAdapter } from '../adapters/index.js';
 import { READERS } from './core.js';
 
 const r = Router();
@@ -104,3 +105,26 @@ r.put('/settings', requireAuth, requireRole('admin'), (req, res) => {
 });
 
 export default r;
+
+
+// Pre-flight CSV validator (Roadmap 4.2)
+r.post('/datasets/validate-csv', requireAuth, requireRole('admin', 'analyst'), upload.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'Attach a CSV file in the "file" field' });
+  const result = validateCsvPreflight(req.file.buffer.toString('utf8'));
+  res.json(result);
+});
+
+// Automated satellite & open data adapters
+r.get('/datasets/adapters', requireAuth, requireRole(...READERS), (req, res) => {
+  res.json({ adapters: getAdaptersStatus() });
+});
+
+r.post('/datasets/adapters/:key/sync', requireAuth, requireRole('admin', 'analyst'), (req, res) => {
+  try {
+    const result = syncAdapter(req.params.key);
+    log(req.user.id, 'adapter.sync', 'dataset', null, { adapter: req.params.key, ...result });
+    res.json(result);
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});

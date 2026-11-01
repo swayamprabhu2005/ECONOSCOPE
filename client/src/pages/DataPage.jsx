@@ -13,6 +13,9 @@ export default function DataPage() {
   const toast = useToast();
   const ds = useApi('/datasets');
   const runs = useApi('/engine/runs');
+  const adapters = useApi('/datasets/adapters');
+  const [preflight, setPreflight] = useState(null);
+  const [syncingAdapter, setSyncingAdapter] = useState('');
   const [busy, setBusy] = useState('');
   const [file, setFile] = useState(null);
   const [upload, setUpload] = useState(null);
@@ -28,6 +31,26 @@ export default function DataPage() {
       runs.reload(); ds.reload(); refreshMeta();
     } catch (e) { setErr(e.message); } finally { setBusy(''); }
   };
+  const syncOpenData = async (key) => {
+    setSyncingAdapter(key); setErr('');
+    try {
+      const res = await api(`/datasets/adapters/${key}/sync`, { method: 'POST' });
+      toast(`Successfully synchronized ${res.adapter} (${res.updated} zones updated) for ${monthName(res.month)}.`);
+      adapters.reload(); ds.reload(); refreshMeta();
+    } catch (e) { setErr(e.message); } finally { setSyncingAdapter(''); }
+  };
+
+  const inspectPreflight = async () => {
+    if (!file) return;
+    setBusy('preflight'); setErr(''); setPreflight(null);
+    try {
+      const form = new FormData(); form.append('file', file);
+      const res = await api('/datasets/validate-csv', { method: 'POST', form });
+      setPreflight(res);
+      if (res.valid) toast(`CSV format validated: ${res.format} format with ${res.totalRows} row(s). Ready to upload.`);
+    } catch (e) { setErr(e.message); } finally { setBusy(''); }
+  };
+
   const doUpload = async (e) => {
     e.preventDefault();
     if (!file) return;
@@ -81,6 +104,47 @@ export default function DataPage() {
         <p className="small muted" style={{ marginTop: 8 }}>Completeness below 100% means some zones sent no value for some months. Those gaps lower confidence and are never filled in silently. Click a row for its version history.</p>
       </div>
 
+      <div className="card" style={{ marginTop: 16 }}>
+        <div className="card-head">
+          <div>
+            <h2>Automated Satellite & Open Data Adapters</h2>
+            <p className="sub">Direct pipeline connectors to public Earth observation and crowdsourced geospatial feeds (NASA VIIRS, OpenStreetMap, Copernicus Sentinel-2).</p>
+          </div>
+          {adapters.data && <span className="badge s-validated">● 3 Connectors Active</span>}
+        </div>
+        {adapters.loading && !adapters.data ? <Loading /> : (
+          <div className="grid g3" style={{ gap: 12 }}>
+            {(adapters.data?.adapters || []).map((a) => (
+              <div key={a.key} className="card" style={{ background: 'var(--bg-2)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div className="row between">
+                  <span className="badge" style={{ color: a.category === 'satellite' ? 'var(--amber)' : 'var(--teal)', borderColor: 'currentColor' }}>{a.category}</span>
+                  <span className="small muted">v{a.version}</span>
+                </div>
+                <div className="strong" style={{ fontSize: 14 }}>{a.name}</div>
+                <p className="small muted" style={{ flex: 1 }}>{a.description}</p>
+                <div className="small muted" style={{ borderTop: '1px solid var(--line)', paddingTop: 6 }}>
+                  <div><strong>Provider:</strong> {a.provider}</div>
+                  <div><strong>Resolution:</strong> {a.resolution}</div>
+                  <div><strong>Cadence:</strong> {a.cadence}</div>
+                  <div><strong>Target metric:</strong> <code>{a.metric}</code></div>
+                </div>
+                {canRun && (
+                  <button
+                    type="button"
+                    className="btn sm"
+                    disabled={!!syncingAdapter}
+                    style={{ alignSelf: 'flex-start', marginTop: 4, borderColor: 'var(--teal)', color: 'var(--teal)' }}
+                    onClick={() => syncOpenData(a.key)}
+                  >
+                    {syncingAdapter === a.key ? 'Syncing...' : '↻ Fetch & Ingest'}
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       <div className="grid g2">
         <div className="card">
           <div className="card-head"><div><h2>Upload real data</h2><p className="sub">Long-format CSV of zone aggregates: <code>cell_code, month, metric, value</code></p></div></div>
@@ -95,7 +159,24 @@ export default function DataPage() {
                 <button type="button" className="btn sm" onClick={() => download('/datasets/cells.csv', 'econoscope-zones.csv').catch((e) => toast(e.message))}>Zone reference</button>
               </div>
               <input className="input" type="file" accept=".csv,text/csv" onChange={(e) => setFile(e.target.files[0])} aria-label="CSV file" />
-              <button className="btn primary" disabled={!file || !!busy} style={{ alignSelf: 'flex-start' }}>{busy === 'upload' ? 'Uploading…' : 'Upload & validate'}</button>
+              <div className="row" style={{ gap: 8 }}>
+                <button type="button" className="btn sm ghost" disabled={!file || !!busy} onClick={inspectPreflight}>
+                  {busy === 'preflight' ? 'Validating...' : '🔍 Pre-flight Schema Check'}
+                </button>
+                <button className="btn primary sm" disabled={!file || !!busy}>
+                  {busy === 'upload' ? 'Uploading…' : 'Upload & Commit'}
+                </button>
+              </div>
+              {preflight && (
+                <div className={preflight.valid ? 'ok-box small' : 'error-box small'} style={{ padding: 10 }}>
+                  <div className="strong">Format: {preflight.format?.toUpperCase()} ({preflight.validRows} / {preflight.totalRows} valid rows checked)</div>
+                  {preflight.errors.length > 0 && (
+                    <ul style={{ margin: '4px 0 0', paddingLeft: 16 }}>
+                      {preflight.errors.slice(0, 4).map((err, i) => <li key={i}>{err}</li>)}
+                    </ul>
+                  )}
+                </div>
+              )}
               {upload && (
                 <div className={upload.rejected ? 'error-box' : 'ok-box'}>
                   Accepted {num(upload.accepted)} row(s){upload.rejected ? `, rejected ${num(upload.rejected)}` : ''}. {upload.metrics.length ? `New version recorded for: ${upload.metrics.join(', ')}.` : ''}

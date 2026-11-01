@@ -93,41 +93,148 @@ export function parseCsv(text) {
 // Long format: cell_code, month (YYYY-MM), metric, value
 // metric may be any observation column or survey_estimate (month = FY start, e.g. 2025-04).
 // Only zone-level aggregates are accepted; values that are not supplied stay missing.
+
+// Pre-flight CSV inspection and format detection (PRD FR-01 & Roadmap 4.2)
+export function validateCsvPreflight(text) {
+  const rows = parseCsv(text.replace(/^﻿/, ''));
+  if (!rows.length) return { valid: false, error: 'File is empty' };
+  const header = rows[0].map((h) => h.trim().toLowerCase());
+
+  let format = 'unknown';
+  if (['cell_code', 'month', 'metric', 'value'].every((h) => header.includes(h))) {
+    format = 'long';
+  } else if (header.includes('cell_code') && header.includes('month')) {
+    const metricsFound = header.filter((h) => OBS_COLS.includes(h) || h === 'survey_estimate');
+    if (metricsFound.length > 0) format = 'wide';
+  } else if (header.includes('lat') && header.includes('lon') && header.includes('month')) {
+    format = 'coordinate';
+  }
+
+  if (format === 'unknown') {
+    return {
+      valid: false,
+      error: 'Unrecognized format. Must contain either long format (cell_code, month, metric, value) or wide format (cell_code, month, + metric columns).',
+      header,
+    };
+  }
+
+  const ids = new Map(all('SELECT id, code, lat, lon FROM cells').map((r) => [r.code, r]));
+  const errors = [];
+  let validRows = 0;
+
+  for (let r = 1; r < Math.min(rows.length, 250); r++) {
+    const line = rows[r];
+    if (format === 'long') {
+      const code = line[header.indexOf('cell_code')]?.trim();
+      const month = line[header.indexOf('month')]?.trim();
+      const metric = line[header.indexOf('metric')]?.trim().toLowerCase();
+      const rawVal = line[header.indexOf('value')]?.trim();
+      const val = Number(rawVal);
+
+      if (!ids.has(code)) errors.push(`Row ${r + 1}: unknown cell_code "${code}"`);
+      else if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month || '')) errors.push(`Row ${r + 1}: invalid month "${month}"`);
+      else if (!OBS_COLS.includes(metric) && metric !== 'survey_estimate') errors.push(`Row ${r + 1}: unknown metric "${metric}"`);
+      else if (!Number.isFinite(val) || val < 0) errors.push(`Row ${r + 1}: invalid value "${rawVal}"`);
+      else validRows++;
+    } else {
+      const code = line[header.indexOf('cell_code')]?.trim();
+      const month = line[header.indexOf('month')]?.trim();
+      if (!ids.has(code)) errors.push(`Row ${r + 1}: unknown cell_code "${code}"`);
+      else if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month || '')) errors.push(`Row ${r + 1}: invalid month "${month}"`);
+      else validRows++;
+    }
+  }
+
+  return {
+    valid: errors.length === 0,
+    format,
+    totalRows: rows.length - 1,
+    checkedRows: Math.min(rows.length - 1, 250),
+    validRows,
+    errors: errors.slice(0, 15),
+    header,
+    sample: rows.slice(1, 6),
+  };
+}
+
+
 export function importObservationsCsv(text, filename = 'upload') {
   const rows = parseCsv(text.replace(/^﻿/, ''));
   if (!rows.length) throw Object.assign(new Error('File is empty'), { status: 400 });
   const header = rows[0].map((h) => h.trim().toLowerCase());
-  const [ci, mi, ki, vi] = ['cell_code', 'month', 'metric', 'value'].map((n) => header.indexOf(n));
-  if ([ci, mi, ki, vi].some((x) => x < 0)) throw Object.assign(new Error('Header must contain: cell_code, month, metric, value'), { status: 400 });
+
+  // Detect format: long or wide
+  const isLong = ['cell_code', 'month', 'metric', 'value'].every((n) => header.includes(n));
+  const isWide = header.includes('cell_code') && header.includes('month') && header.some((h) => OBS_COLS.includes(h) || h === 'survey_estimate');
+
+  if (!isLong && !isWide) {
+    throw Object.assign(new Error('Header must contain either: cell_code, month, metric, value (long format) OR cell_code, month + metric columns (wide format)'), { status: 400 });
+  }
+
   const ids = new Map(all('SELECT id, code FROM cells').map((r) => [r.code, r.id]));
   const errors = [];
   let accepted = 0;
   const touched = {};
+
   tx(() => {
-    for (let r = 1; r < rows.length; r++) {
-      const line = rows[r];
-      const code = line[ci]?.trim(), month = line[mi]?.trim(), metric = line[ki]?.trim().toLowerCase(), rawValue = line[vi]?.trim();
-      const value = Number(rawValue);
-      const bad = (msg) => errors.length < 50 && errors.push(`Row ${r + 1}: ${msg}`);
-      if (!ids.has(code)) { bad(`unknown cell_code "${code}"`); continue; }
-      if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month || '')) { bad(`month must be YYYY-MM, got "${month}"`); continue; }
-      if (rawValue === '' || rawValue === undefined || !Number.isFinite(value) || value < 0) { bad('value must be a non-negative number'); continue; }
-      const id = ids.get(code);
-      if (metric === 'survey_estimate') {
-        run('INSERT OR REPLACE INTO surveys (cell_id, fy_start, estimate) VALUES (?,?,?)', id, Number(month.slice(0, 4)), value);
-      } else if (OBS_COLS.includes(metric)) {
-        run('INSERT OR IGNORE INTO observations (cell_id, month) VALUES (?, ?)', id, month);
-        run(`UPDATE observations SET ${metric} = ? WHERE cell_id = ? AND month = ?`, value, id, month);
-      } else { bad(`unknown metric "${metric}"`); continue; }
-      (touched[metric] ||= { n: 0, months: new Set() }).n++;
-      touched[metric].months.add(month);
-      accepted++;
+    if (isLong) {
+      const [ci, mi, ki, vi] = ['cell_code', 'month', 'metric', 'value'].map((n) => header.indexOf(n));
+      for (let r = 1; r < rows.length; r++) {
+        const line = rows[r];
+        const code = line[ci]?.trim(), month = line[mi]?.trim(), metric = line[ki]?.trim().toLowerCase(), rawValue = line[vi]?.trim();
+        const value = Number(rawValue);
+        const bad = (msg) => errors.length < 50 && errors.push(`Row ${r + 1}: ${msg}`);
+        if (!ids.has(code)) { bad(`unknown cell_code "${code}"`); continue; }
+        if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month || '')) { bad(`month must be YYYY-MM, got "${month}"`); continue; }
+        if (rawValue === '' || rawValue === undefined || !Number.isFinite(value) || value < 0) { bad('value must be a non-negative number'); continue; }
+        const id = ids.get(code);
+        if (metric === 'survey_estimate') {
+          run('INSERT OR REPLACE INTO surveys (cell_id, fy_start, estimate) VALUES (?,?,?)', id, Number(month.slice(0, 4)), value);
+        } else if (OBS_COLS.includes(metric)) {
+          run('INSERT OR IGNORE INTO observations (cell_id, month) VALUES (?, ?)', id, month);
+          run(`UPDATE observations SET ${metric} = ? WHERE cell_id = ? AND month = ?`, value, id, month);
+        } else { bad(`unknown metric "${metric}"`); continue; }
+        (touched[metric] ||= { n: 0, months: new Set() }).n++;
+        touched[metric].months.add(month);
+        accepted++;
+      }
+    } else {
+      // Wide format: unpivot each metric column
+      const ci = header.indexOf('cell_code');
+      const mi = header.indexOf('month');
+      const metricCols = header.map((h, i) => ({ col: h, idx: i })).filter((x) => OBS_COLS.includes(x.col) || x.col === 'survey_estimate');
+
+      for (let r = 1; r < rows.length; r++) {
+        const line = rows[r];
+        const code = line[ci]?.trim(), month = line[mi]?.trim();
+        const bad = (msg) => errors.length < 50 && errors.push(`Row ${r + 1}: ${msg}`);
+        if (!ids.has(code)) { bad(`unknown cell_code "${code}"`); continue; }
+        if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month || '')) { bad(`month must be YYYY-MM, got "${month}"`); continue; }
+        const id = ids.get(code);
+
+        for (const m of metricCols) {
+          const rawVal = line[m.idx]?.trim();
+          if (rawVal === '' || rawVal === undefined) continue; // missing values stay missing
+          const val = Number(rawVal);
+          if (!Number.isFinite(val) || val < 0) { bad(`column ${m.col}: value must be non-negative`); continue; }
+          if (m.col === 'survey_estimate') {
+            run('INSERT OR REPLACE INTO surveys (cell_id, fy_start, estimate) VALUES (?,?,?)', id, Number(month.slice(0, 4)), val);
+          } else {
+            run('INSERT OR IGNORE INTO observations (cell_id, month) VALUES (?, ?)', id, month);
+            run(`UPDATE observations SET ${m.col} = ? WHERE cell_id = ? AND month = ?`, val, id, month);
+          }
+          (touched[m.col] ||= { n: 0, months: new Set() }).n++;
+          touched[m.col].months.add(month);
+          accepted++;
+        }
+      }
     }
+
     for (const [k, v] of Object.entries(touched)) {
       const ms = [...v.months].sort();
-      recordVersion(k, ms.length > 1 ? `${ms[0]} … ${ms[ms.length - 1]}` : ms[0], v.n, `CSV upload: ${filename}`);
+      recordVersion(k, ms.length > 1 ? `${ms[0]} … ${ms[ms.length - 1]}` : ms[0], v.n, `CSV upload (${isWide ? 'wide' : 'long'}): ${filename}`);
       run('UPDATE datasets SET synthetic = 0 WHERE key = ?', k);
     }
   });
-  return { accepted, rejected: rows.length - 1 - accepted, errors, metrics: Object.keys(touched) };
+  return { accepted, rejected: errors.length, errors, metrics: Object.keys(touched), format: isWide ? 'wide' : 'long' };
 }
