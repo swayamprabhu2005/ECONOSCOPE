@@ -2,6 +2,7 @@ import { useI18n, LANGUAGES } from '../lib/i18n.jsx';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Logo } from '../components/Layout.jsx';
+import { ThemeToggle } from '../lib/theme.jsx';
 import GridMap from '../components/GridMap.jsx';
 import ModelExplainer, { ALERT_KINDS } from '../components/ModelExplainer.jsx';
 import { useAuth } from '../lib/auth.jsx';
@@ -21,27 +22,26 @@ export default function Landing() {
         <Link to="/" className="brand" style={{ padding: 0 }}><Logo size={34} /><div><div className="brand-name">EconoScope</div><div className="brand-sub">Goa pilot</div></div></Link>
         <div className="links">
           <a href="#how">{t('landing_nav_how')}</a><a href="#model">{t('landing_nav_model')}</a>
+          <ThemeToggle />
           <select
             className="select sm lang-selector"
-            style={{ width: 'auto', padding: '4px 10px', height: 32, fontSize: 13, fontWeight: 600, background: '#ffffff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 6, cursor: 'pointer' }}
             value={lang}
             onChange={(e) => setLang(e.target.value)}
             title="Change Language"
           >
             {LANGUAGES.map((l) => (
-              <option key={l.code} value={l.code} style={{ background: '#ffffff', color: '#0f172a' }}>
+              <option key={l.code} value={l.code}>
                 {l.native}
               </option>
             ))}
           </select>
-          {user && <button className="btn ghost" onClick={logout}>Sign out</button>}
+          {user && <button className="btn ghost" onClick={logout}>{t('sign_out')}</button>}
           <Link to={appLink} className="btn primary">{user ? t('landing_nav_open') : t('landing_nav_signin')}</Link>
         </div>
       </nav>
 
       <section className="l-section hero">
         <div>
-
           <h1>{t('hero_title_1')} <em>{t('hero_title_em')}</em> {t('hero_title_2')}</h1>
           <p className="lead">{t('hero_lead')}</p>
           <div className="row" style={{ gap: 12 }}>
@@ -50,7 +50,7 @@ export default function Landing() {
           </div>
           {preview && (
             <div className="row" style={{ gap: 32, marginTop: 34 }}>
-              <div><div className="l-stat" style={{ fontSize: 30 }}>{preview.stats.cells}</div><div className="small muted">{t('zones_monitored')}</div></div>
+              <div><div className="l-stat" style={{ fontSize: 30, color: 'var(--primary)' }}>{preview.stats.cells}</div><div className="small muted">{t('zones_monitored')}</div></div>
               <div><div className="l-stat" style={{ fontSize: 30, color: 'var(--amber)' }}>8</div><div className="small muted">{t('data_sources_combined')}</div></div>
               <div><div className="l-stat" style={{ fontSize: 30, color: 'var(--teal)' }}>{preview.stats.open_alerts}</div><div className="small muted">{t('zones_flagged')}</div></div>
             </div>
@@ -84,9 +84,9 @@ export default function Landing() {
         <div className="grid g3">
           {[['1', 'var(--amber)', t('step1_title'), t('step1_desc')],
             ['2', 'var(--teal)', t('step2_title'), t('step2_desc')],
-            ['3', 'var(--orange)', t('step3_title'), t('step3_desc')]].map(([n, c, title, desc]) => (
+            ['3', 'var(--primary)', t('step3_title'), t('step3_desc')]].map(([n, c, title, desc]) => (
             <div key={n} className="l-card">
-              <div className="pill-num" style={{ background: c }}>{n}</div>
+              <div className="pill-num" style={{ background: c, color: '#ffffff' }}>{n}</div>
               <h3 style={{ font: '700 19px var(--serif)', margin: '16px 0 8px' }}>{title}</h3>
               <p className="muted">{desc}</p>
             </div>
@@ -116,7 +116,7 @@ export default function Landing() {
         <div className="l-card" style={{ padding: '40px 24px' }}>
           <h2 className="l-title">{t('explore_pilot')}</h2>
           <p className="muted" style={{ marginBottom: 20 }}>{t('explore_pilot_desc')}</p>
-          <Link to={appLink} className="btn primary">{user ? 'Open the portal →' : 'Sign in →'}</Link>
+          <Link to={appLink} className="btn primary">{user ? t('open_portal_arrow') : t('signin_portal_arrow')}</Link>
         </div>
       </section>
 

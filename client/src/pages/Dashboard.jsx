@@ -95,10 +95,10 @@ export default function Dashboard() {
 
       <div className="grid g-2-1">
         <div className="card">
-          <div className="card-head"><div><h2>Validation priority queue</h2><p className="sub">Open flags, highest priority first</p></div><Link to="/app/alerts" className="small">All flags →</Link></div>
+          <div className="card-head"><div><h2>{t('val_priority_queue')}</h2><p className="sub">{t('open_flags_priority')}</p></div><Link to="/app/alerts" className="small">{t('all_flags')}</Link></div>
           <div className="table-wrap">
             <table>
-              <thead><tr><th>Flag</th><th>Zone</th><th>Type</th><th>Tier</th><th>Confidence</th><th>Trend</th><th>Status</th></tr></thead>
+              <thead><tr><th>{t('flag')}</th><th>{t('zone')}</th><th>Type</th><th>Tier</th><th>{t('confidence')}</th><th>Trend</th><th>Status</th></tr></thead>
               <tbody>
                 {d.topAlerts.map((a) => (
                   <tr key={a.id} className="click" onClick={() => nav(`/app/alerts/${a.id}`)}>
@@ -116,7 +116,7 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="card">
-          <div className="card-head"><h2>Recent activity</h2></div>
+          <div className="card-head"><h2>{t('recent_field_activity')}</h2></div>
           <div className="timeline">
             {d.recent.map((l) => (
               <div className="item" key={l.id}>

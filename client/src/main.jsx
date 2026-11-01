@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './styles.css';
+import { ThemeProvider } from './lib/theme.jsx';
 import { AuthProvider, useAuth } from './lib/auth.jsx';
 import { ToastProvider, Loading } from './components/ui.jsx';
 import { I18nProvider } from './lib/i18n.jsx';
@@ -39,33 +40,35 @@ const FIELD = ['admin', 'analyst', 'field_officer'];
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <AuthProvider>
-      <I18nProvider>
-        <ToastProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/app" element={<Protected><Layout /></Protected>}>
-              <Route index element={<Home />} />
-              <Route path="map" element={<MapPage />} />
-              <Route path="alerts" element={<Protected roles={STAFF}><Alerts /></Protected>} />
-              <Route path="alerts/:id" element={<AlertDetail />} />
-              <Route path="cells/:id" element={<CellDetail />} />
-              <Route path="field" element={<Protected roles={FIELD}><FieldTasks /></Protected>} />
-              <Route path="zones" element={<Protected roles={STAFF}><Zones /></Protected>} />
-              <Route path="governance" element={<Protected roles={STAFF}><Governance /></Protected>} />
-              <Route path="analytics" element={<Protected roles={STAFF}><Analytics /></Protected>} />
-              <Route path="data" element={<Protected roles={STAFF}><DataPage /></Protected>} />
-              <Route path="admin" element={<Protected roles={['admin']}><Admin /></Protected>} />
-              <Route path="method" element={<Methodology />} />
-            </Route>
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </BrowserRouter>
-      </ToastProvider>
-      </I18nProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <I18nProvider>
+          <ToastProvider>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Landing />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/app" element={<Protected><Layout /></Protected>}>
+                  <Route index element={<Home />} />
+                  <Route path="map" element={<MapPage />} />
+                  <Route path="alerts" element={<Protected roles={STAFF}><Alerts /></Protected>} />
+                  <Route path="alerts/:id" element={<AlertDetail />} />
+                  <Route path="cells/:id" element={<CellDetail />} />
+                  <Route path="field" element={<Protected roles={FIELD}><FieldTasks /></Protected>} />
+                  <Route path="zones" element={<Protected roles={STAFF}><Zones /></Protected>} />
+                  <Route path="governance" element={<Protected roles={STAFF}><Governance /></Protected>} />
+                  <Route path="analytics" element={<Protected roles={STAFF}><Analytics /></Protected>} />
+                  <Route path="data" element={<Protected roles={STAFF}><DataPage /></Protected>} />
+                  <Route path="admin" element={<Protected roles={['admin']}><Admin /></Protected>} />
+                  <Route path="method" element={<Methodology />} />
+                </Route>
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </BrowserRouter>
+          </ToastProvider>
+        </I18nProvider>
+      </AuthProvider>
+    </ThemeProvider>
   </StrictMode>,
 );
 
