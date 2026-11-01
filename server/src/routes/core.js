@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { all, get, run, log, listMonths, getSettings, ROLES } from '../db.js';
+import { all, get, run, log, listMonths, getSettings, ROLES, getStorageTelemetry } from '../db.js';
 import { requireAuth, requireRole, signToken, verifyPassword, publicUser, hashPassword } from '../auth.js';
 import { SIGNAL_META, ALERT_TYPES, TRAITS, simulateCounterfactual } from '../engine/engine.js';
 import { GOA_OUTLINE, TALUKAS } from '../sim/generator.js';
@@ -270,4 +270,8 @@ r.get('/cells/:id/counterfactual', requireAuth, (req, res) => {
   const deltaPct = Number(req.query.increase ?? 20);
   const result = simulateCounterfactual(metric.expected, metric.registered, sigma, metric.confidence, deltaPct);
   res.json({ cell_id: cell.id, month: latestMonth, ...result });
+});
+
+r.get('/admin/storage', requireAuth, requireRole('admin', 'auditor', 'analyst'), (req, res) => {
+  res.json(getStorageTelemetry());
 });
