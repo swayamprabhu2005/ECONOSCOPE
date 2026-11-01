@@ -1,6 +1,6 @@
 # EconoScope — Comprehensive Technical Updates & Implementation Report
 
-This document provides a detailed breakdown of all methodological, pipeline, field operations, governance, and visual enhancements implemented in EconoScope (Goa Pilot) for the **IDEAS 5.0 (Idea to Impact 2026)** competition.
+This document provides a detailed breakdown of all methodological, pipeline, field operations, governance, and visual/UI enhancements implemented in EconoScope (Goa Pilot) for the **IDEAS 5.0 (Idea to Impact 2026)** competition.
 
 ---
 
@@ -10,11 +10,11 @@ The platform was upgraded across five core pillars without compromising any exis
 
 | Category | Key Enhancements Implemented |
 |---|---|
-| **4.1 Methodological & Algorithmic** | Uber H3 Hexagonal Grid (Res 7), Counterfactual Simulation Engine, Empirical Bayes Partial Pooling |
+| **4.1 Methodological & Algorithmic** | Uber H3 Hexagonal Grid (Res 7), Counterfactual Policy Simulation Engine, Empirical Bayes Partial Pooling |
 | **4.2 Data Ingestion & Robustness** | Satellite & Open Data Adapters (VIIRS, Sentinel-2, OSM), Schema-Enforced Multi-Format CSV Preflight Validator |
-| **4.3 Field Operations & UX** | PWA Offline Mode (Service Worker), Multilingual i18n (English & Hindi), Enhanced PDF Field Packs with GPS QR Codes |
-| **4.4 Governance & Safeguards** | Automated Disparity Rate Limiter (Bias Circuit Breaker), Granular Export Watermarking, Anti-Quota Rate Throttling, Native SQLite WAL Architecture |
-| **Visual Design & Themes** | Dynamic Dark/Light Theme System with Sun/Moon Toggle, Maritime Governance (Dark) & Forest Canopy Botanical Harmony (Light adhering to 60-30-10 rule) |
+| **4.3 Field Operations & UX** | Progressive Web App (PWA) Offline Mode with Service Worker, High-Contrast Bilingual Interface (English & Hindi), Enhanced PDF Field Packs with GPS QR Codes |
+| **4.4 Governance & Safeguards** | Automated Disparity Rate Limiter (Bias Circuit Breaker), Granular Export Watermarking & Anti-Quota Throttling, Native SQLite WAL Architecture (Zero External DB Dependencies) |
+| **UI & Visual Design System** | Dynamic Dual-Theme System with Sun/Moon Toggle (`☀️ / 🌙`), Maritime Governance (Dark), Forest Canopy Botanical Harmony (Light adhering strictly to the 60-30-10 rule and color exclusion mandates) |
 
 ---
 
@@ -81,11 +81,10 @@ The platform was upgraded across five core pillars without compromising any exis
   - Built `client/src/lib/offline.js` with IndexedDB/localStorage offline mutation queue.
   - Added visual offline indicators and a 1-click sync button in `Layout.jsx`.
 
-### 4.3.2 Bilingual Interface (English & Hindi)
-- **Implementation:**
-  - Built `client/src/lib/i18n.jsx` supporting **English** and **Hindi (हिन्दी)**.
-  - Formatted numerical values with tabular numerics while translating all executive summaries, metrics, and navigation labels.
-  - Fixed Windows/Chromium contrast bugs on `<select>` and `<option>` elements.
+### 4.3.2 Bilingual Interface (English & Hindi) & Dropdown Contrast Fix
+- **Language Scope:** Focused strictly on **English** and **Hindi (हिन्दी)** to ensure complete, high-fidelity translation quality across all views.
+- **Contrast Bug Resolved:** Fixed Windows Chromium / Edge native `<select>` and `<option>` styling bug where dropdown items rendered white on white or lacked hover visibility. Explicit background (`var(--panel)`) and text color (`var(--text)`) rules guarantee 100% legibility in both dark and light modes.
+- **End-to-End Translations:** Comprehensive coverage across navigation labels, topbar metadata, dashboard KPI metrics, validation priority queues, activity timelines, map layer selectors, and field checklists. Numbers remain formatted as tabular numerics.
 
 ### 4.3.3 Enhanced PDF Field Packs with QR Navigation
 - **Implementation:**
@@ -105,30 +104,51 @@ The platform was upgraded across five core pillars without compromising any exis
   - Created `exportRateLimiter` middleware in `server/src/routes/core.js` limiting export downloads to 5 per 15-minute window per IP.
   - Stamped cryptographic SHA-256 watermarks with user ID and timestamp on all CSV and PDF exports.
 
-### 5.5.3 Native SQLite WAL Dual Storage Strategy (Zero External Dependencies)
+### 5.5.3 Native SQLite WAL Architecture (Zero External Database Overhead)
 - **Implementation:**
   - Pure SQLite in WAL (Write-Ahead Logging) mode with `NORMAL` synchronous mode and 64 MB memory cache.
   - Fully decoupled from external PostgreSQL dependencies, ensuring 100% self-contained operation.
 
 ---
 
-## 6. Theme Architecture: Dark/Light Mode with Bespoke Botanical Harmony
+## 6. UI & Theme Architecture: Dual Theme System with Sun/Moon Toggle
 
-The visual system was engineered to offer seamless day/night operation via a dedicated Sun/Moon toggle (`☀️ / 🌙`) with state persistence in `localStorage`:
+The user interface was comprehensively overhauled to provide day/night operational flexibility via a persistent Sun/Moon toggle (`☀️ / 🌙`) in the top navigation bar.
 
-### 6.1 Dark Theme: "Maritime Governance"
-- **Canvas:** Deep oceanic abyssal navy (`#0b1528`).
-- **Elevated Surfaces:** Marine slate cards (`#162a4a`) with defined borders (`#26436f`).
-- **Typography:** Crisp high-contrast white-tinted text (`#f1f7fe`) and slate-blue muted text (`#9db5d4`).
-- **Accents:** Oceanic sky blue (`#0284c7`), estuarine seafoam (`#0d9488`), and civic amber (`#f59e0b`).
+### 6.1 Theme Architecture & Design Tokens
+Themes are managed reactively via [`client/src/lib/theme.jsx`](file:///d:/MyFiles/IDEAS-2027/client/src/lib/theme.jsx) and controlled through semantic CSS variables on `:root` and `[data-theme='light']`:
 
-### 6.2 Light Theme: "Forest Canopy & Botanical Harmony" (60-30-10 Rule)
-Engineered strictly following user color guidelines: **No pure white canvas, no pure black, no blue, no orange, no terracotta brown, and no red**. Sits comfortably in the balanced middle:
-- **60% Surfaces:** Muted earthy sage-linen canvas (`#dbe4d7`) and organic ivory-sage panels (`#ebf2e8`). Zero clinical white glare.
-- **30% Structure & Typography:** Deep evergreen pine slate (`#192e1d`, >11:1 contrast, no black) and refined sage divider lines (`#b6c7b3`).
-- **10% Accents & Details:** Fern emerald green primary buttons (`#276938`), warm golden moss badges (`#9b7a14`), deep eucalyptus pine accents (`#366d58`), and subdued mulberry plum berry for high alerts (`#733c52`).
-- **High-Contrast Form Controls:** Explicit `<option>` and `.lang-selector` styling ensuring 100% readability across Chromium and Windows native popups.
-- **Harmonized Landing Page:** Replaced black card backgrounds with theme-adaptive panels matching the 60-30-10 balance.
+| Design Token | Dark Mode ("Maritime Governance") | Light Mode ("Forest Canopy Botanical") | Role in 60-30-10 Rule |
+|---|---|---|---|
+| `--bg` | `#0b1528` (Abyssal Navy) | `#dbe4d7` (Muted Earthy Sage-Linen) | 60% Canvas Surface |
+| `--bg-2` | `#10203a` (Secondary Navy) | `#cfdccd` (Soft Sage Canvas) | 60% Recessed Sections / Sidebar |
+| `--panel` | `#162a4a` (Marine Slate) | `#ebf2e8` (Organic Ivory-Sage) | 60% Elevated Cards & Dialogs |
+| `--panel-2` | `#1e3860` (Hover Slate) | `#dae5d6` (Sage Hover Surface) | Interactive Surface State |
+| `--line` | `#26436f` (Deep Cool Border) | `#b6c7b3` (Refined Sage Border) | 30% Structural Dividers |
+| `--line-2` | `#3b5f94` (Interactive Border) | `#92a88e` (Defined Sage Border) | 30% Control Outlines |
+| `--text` | `#f1f7fe` (Crisp High-Contrast) | `#192e1d` (Deep Evergreen Pine Slate) | 30% Primary Typography (>11:1 AAA) |
+| `--text-2` | `#9db5d4` (Muted Slate-Blue) | `#2f4b34` (Woodland Moss) | 30% Secondary Typography |
+| `--muted` | `#627d9e` (Accessible Tertiary) | `#536e59` (Lichen Grey-Green) | Subtitles, Hints & Timestamps |
+| `--primary` | `#0284c7` (Ocean Sky Blue) | `#276938` (Fern Emerald Green) | 10% Primary Action Buttons |
+| `--primary-grad` | Linear gradient `#0284c7` → `#0ea5e9` | Linear gradient `#276938` → `#3a7d4c` | Button Elevation & Focus |
+| `--amber` | `#f59e0b` (Civic Amber) | `#9b7a14` (Warm Golden Moss / Brass Ochre) | 10% Notice & Priority Badges |
+| `--teal` | `#0284c7` (Ocean Cyan) | `#366d58` (Deep Eucalyptus Pine) | 10% Secondary Visual Highlights |
+| `--red` | `#ef4444` (Rose Red) | `#733c52` (Subdued Royal Mulberry Berry) | 10% High Alert (No Bright Red) |
+| `--green` | `#10b981` (Emerald Green) | `#257836` (Vivid Leaf Green) | 10% Validation & Health State |
+
+### 6.2 Strict Light Theme Color Compliance
+In accordance with user design directives:
+- **NO Stark Pure White Canvas:** Replaced with soft, natural sage-linen (`#dbe4d7`, luminance ~86%) sitting comfortably in the middle — easy on the eyes during prolonged fieldwork or desktop review.
+- **NO Pure Black Typography:** Replaced with deep evergreen pine slate (`#192e1d`), ensuring rich editorial contrast (>11:1 against cards) without harsh digital blackness.
+- **NO Blue:** Replaced with botanical eucalyptus pine (`#366d58`) and fern green (`#276938`).
+- **NO Orange & NO Terracotta Brown:** Replaced with warm golden moss / brass ochre (`#9b7a14`) and golden olive brass (`#8a6c18`).
+- **NO Bright Red:** Replaced with subdued royal mulberry plum berry (`#733c52`) for high-priority risk indicators.
+
+### 6.3 Joint Relationship & Element Harmony Across All Views
+- **Landing Page Hero & "How it works" Cards:** Eliminated heavy black boxes on the landing page; cards now use `.l-card` styled with `var(--panel)` and `var(--line)` to blend with the background in both modes. Removed the three hero badge pills.
+- **Sidebar & Topbar:** Seamless transition between dark navy and botanical sage with matching brand iconography.
+- **Data Visualizations & Charts:** Recharts SVG Cartesian grids, tick texts, axis lines, and custom hover tooltips adapt automatically via CSS custom properties.
+- **Leaflet Map Overlays:** Map shells, tooltip popups, and legends harmonize cleanly with the active theme.
 
 ---
 
