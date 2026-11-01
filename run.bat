@@ -32,7 +32,7 @@ if not exist "client\node_modules" (
     call npm --prefix client install
 )
 
-:: 4. Ensure root dependencies (concurrently)
+:: 4. Ensure root dependencies
 if not exist "node_modules" (
     echo [*] Installing runner dependencies...
     call npm install
@@ -40,21 +40,21 @@ if not exist "node_modules" (
 
 :: 5. Ensure database is seeded
 if not exist "server\data\econoscope.db" (
-    echo [*] Initializing and seeding demo database (549 zones, 36 months of data)...
+    echo [*] Initializing and seeding demo database: 549 zones, 36 months of data...
     call npm --prefix server run seed
 )
 
 echo.
 echo ==============================================================================
 echo  Starting EconoScope Full-Stack Platform...
-echo  - Backend API:  http://localhost:4000 (Express + SQLite WAL Engine)
-echo  - Frontend Web: http://localhost:5173 (React + Vite + Leaflet + H3)
+echo  - Backend API:  http://localhost:4000 [Express + SQLite WAL Engine]
+echo  - Frontend Web: http://localhost:5173 [React + Vite + Leaflet + H3]
 echo ==============================================================================
 echo.
 echo Press Ctrl+C at any time to stop the application.
 echo.
 
-:: Open browser automatically after a short delay
+:: Open browser automatically
 start "" http://localhost:5173
 
 :: Run concurrently
