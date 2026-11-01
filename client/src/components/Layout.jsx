@@ -4,14 +4,15 @@ import { useAuth, can } from '../lib/auth.jsx';
 import { api } from '../lib/api.js';
 import { ROLE_META, TYPE_META, monthName } from '../lib/format.js';
 import { useI18n, LANGUAGES } from '../lib/i18n.jsx';
+import { ThemeToggle } from '../lib/theme.jsx';
 import { getOfflineQueue, isOnline, flushOfflineQueue } from '../lib/offline.js';
 
 export const Logo = ({ size = 30 }) => (
   <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
-    <rect width="32" height="32" rx="7" fill="#0284c7" />
+    <rect width={32} height={32} rx="7" fill="var(--primary, #0284c7)" />
     <circle cx="14" cy="14" r="7.5" fill="none" stroke="#ffffff" strokeWidth="2.6" />
     <path d="M19.5 19.5 26 26" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" />
-    <circle cx="14" cy="14" r="2.4" fill="#f59e0b" />
+    <circle cx="14" cy="14" r="2.4" fill="var(--amber, #f59e0b)" />
   </svg>
 );
 
@@ -127,15 +128,15 @@ export default function Layout() {
                 {syncing ? 'Syncing...' : `⚡ ${t('sync_now')} (${offlineQueue.length})`}
               </button>
             )}
+            <ThemeToggle />
             <select
               className="select sm lang-selector"
-              style={{ width: 'auto', padding: '4px 10px', height: 32, fontSize: 13, fontWeight: 600, background: '#ffffff', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 6, cursor: 'pointer' }}
               value={lang}
               onChange={(e) => setLang(e.target.value)}
               title="Change Language"
             >
               {LANGUAGES.map((l) => (
-                <option key={l.code} value={l.code} style={{ background: '#ffffff', color: '#0f172a' }}>
+                <option key={l.code} value={l.code}>
                   {l.native}
                 </option>
               ))}

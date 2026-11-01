@@ -12,9 +12,9 @@ The platform was upgraded across five core pillars without compromising any exis
 |---|---|
 | **4.1 Methodological & Algorithmic** | Uber H3 Hexagonal Grid (Res 7), Counterfactual Simulation Engine, Empirical Bayes Partial Pooling |
 | **4.2 Data Ingestion & Robustness** | Satellite & Open Data Adapters (VIIRS, Sentinel-2, OSM), Schema-Enforced Multi-Format CSV Preflight Validator |
-| **4.3 Field Operations & UX** | PWA Offline Mode (Service Worker), Multilingual i18n (English, Konkani, Marathi, Hindi), Enhanced PDF Field Packs with GPS QR Codes |
-| **4.4 Governance & Safeguards** | Automated Disparity Rate Limiter (Bias Circuit Breaker), Granular Export Watermarking, Anti-Quota Rate Throttling, Native SQLite WAL Dual Storage Architecture |
-| **Visual Design** | Bespoke "Maritime Governance" Theme (Abyssal Navy, Deep Sea Teal, Civic Amber) |
+| **4.3 Field Operations & UX** | PWA Offline Mode (Service Worker), Multilingual i18n (English & Hindi), Enhanced PDF Field Packs with GPS QR Codes |
+| **4.4 Governance & Safeguards** | Automated Disparity Rate Limiter (Bias Circuit Breaker), Granular Export Watermarking, Anti-Quota Rate Throttling, Native SQLite WAL Architecture |
+| **Visual Design & Themes** | Dynamic Dark/Light Theme System with Sun/Moon Toggle, Maritime Governance (Dark) & Forest Canopy Botanical Harmony (Light adhering to 60-30-10 rule) |
 
 ---
 
@@ -48,117 +48,94 @@ The platform was upgraded across five core pillars without compromising any exis
 - **Implementation:**
   - Implemented Gelman & Hill (2007) Empirical Bayes Shrinkage in `server/src/engine/stats.js`:
     - Computes within-group variance $s_j^2$ and grand between-group variance $\tau^2 = \max\left(10^{-4}, \text{Var}(\mu_j) - \frac{1}{J}\sum \frac{s_j^2}{n_j}\right)$.
-    - Dynamic shrinkage weight:
-      $$\lambda_j = \frac{\tau^2}{\tau^2 + s_j^2 / n_j}$$
-    - Shrunk peer-group level:
-      $$\theta_j = \lambda_j \bar{y}_j + (1 - \lambda_j) \mu_{\text{grand}}$$
-  - Integrated into `server/src/engine/engine.js` so peer group residual baselines dynamically adjust according to group evidence density.
+    - Derives dynamic shrinkage weight:
+      $$B_j = \frac{\tau^2}{\tau^2 + s_j^2 / n_j}$$
+    - Shrunk mean: $\mu_j^* = B_j \mu_j + (1 - B_j) M$
+  - Integrated into the regression calibration loop in `server/src/engine/engine.js`.
 
 ---
 
 ## 3. Section 4.2: Data Ingestion and Pipeline Robustness
 
 ### 4.2.1 Automated Satellite & Open Data Ingestion Adapters
-- **Problem Addressed:** Manual CSV curation is labour-intensive. Automated adapters are needed to query external geospatial feeds directly.
-- **Implementation:**
-  - Created `server/src/adapters/index.js` containing three dedicated adapters:
-    1. **VIIRS Black Marble (NASA):** Ingests lunar-calibrated day/night band nighttime radiance.
-    2. **Copernicus Sentinel-2 (ESA):** Ingests high-resolution optical surface reflectance and normalised difference built-up index (NDBI).
-    3. **OpenStreetMap Overpass API:** Ingests commercial amenities, shops, accommodation nodes, and transport infrastructure.
-  - Added REST endpoints `GET /api/v1/datasets/adapters` and `POST /api/v1/datasets/adapters/:key/sync` in `server/src/routes/data.js`.
-  - Added an interactive Open Data Adapters card on the **Data & pipeline** page showing connection status, licensing, and sync actions.
+- **Implementation:** Created `server/src/adapters/satellite_adapters.js` with three dedicated adapters:
+  1. `ViirsNightlightAdapter`: Pulls NOAA/NASA Suomi-NPP VIIRS day-night band radiance.
+  2. `SentinelBuiltUpAdapter`: Computes normalized difference built-up index (NDBI) from Copernicus Sentinel-2 Level-2A imagery.
+  3. `OsmInfrastructureAdapter`: Queries OpenStreetMap Overpass API for commercial points of interest, bank branches, and power substations.
+- **API Endpoint:** `POST /api/v1/adapters/ingest` in `server/src/routes/core.js`.
 
 ### 4.2.2 Schema-Enforced Multi-Format CSV Preflight Validator
-- **Problem Addressed:** Departmental departments export records in conflicting CSV schemas (some long-format, some wide-format matrix tables).
-- **Implementation:**
-  - Built `validateCsvPreflight(text)` in `server/src/datasets.js`:
-    - Automatically detects format (`long` vs `wide`).
-    - Validates mandatory fields (`cell_code`, `month`, and metrics).
-    - Checks for negative numeric anomalies, malformed dates (`YYYY-MM`), and unknown cell identifiers.
-  - Added `POST /api/v1/datasets/validate-csv` providing instant pre-upload validation previews with row-by-row error diagnostics.
+- **Implementation:** Created `server/src/adapters/csv_validator.js` supporting automated format detection and strict schema enforcement across 3 supported schemas:
+  - Standard Timeseries: `zone_code, month, registered, footfall, night_light, power_connections, digital_points`
+  - Commercial Registry: `registration_id, enterprise_name, zone_code, taluka, category, registration_date`
+  - Satellite Ingestion: `h3_index, timestamp, viirs_radiance, builtup_pct, cloud_cover`
+- **Frontend Integration:** Added preflight summary cards, row counts, and error tables into `DataPage.jsx`.
 
 ---
 
 ## 4. Section 4.3: Field Operations and UX Enhancements
 
 ### 4.3.1 Progressive Web App (PWA) Offline Mode
-- **Problem Addressed:** Field validation officers in rural talukas (e.g., Sanguem, Canacona, Sattari) frequently operate without cellular data.
 - **Implementation:**
-  - Added `client/public/manifest.json` with standalone display mode, theme colors, and PWA icon definitions.
-  - Implemented `client/public/sw.js` with Cache-First strategy for static application assets and Network-First with fallback for data.
-  - Built `client/src/lib/offline.js`:
-    - Caches assigned task lists to `localStorage`.
-    - Queues inspection validations locally when offline.
-    - Provides background sync and a manual "Sync Now" trigger when online.
-  - Added visual offline status pills and sync indicators in `Layout.jsx` and `FieldTasks.jsx`.
+  - Registered Cache-First and Network-First service worker (`sw.js`, cache v2).
+  - Built `client/src/lib/offline.js` with IndexedDB/localStorage offline mutation queue.
+  - Added visual offline indicators and a 1-click sync button in `Layout.jsx`.
 
-### 4.3.2 Local Language Support (i18n)
-- **Problem Addressed:** Grassroots field staff in Goa work more effectively in local administrative languages.
+### 4.3.2 Bilingual Interface (English & Hindi)
 - **Implementation:**
-  - Created `client/src/lib/i18n.jsx` containing comprehensive dictionary mappings for:
-    - **English (Default)**
-    - **Konkani (कोंकणी - Goa)**
-    - **Marathi (मराठी)**
-    - **Hindi (हिन्दी)**
-  - Wrapped root application in `I18nProvider`.
-  - Added native language selector in the top header. All navigation links, status indicators, and field checklists dynamically translate.
+  - Built `client/src/lib/i18n.jsx` supporting **English** and **Hindi (हिन्दी)**.
+  - Formatted numerical values with tabular numerics while translating all executive summaries, metrics, and navigation labels.
+  - Fixed Windows/Chromium contrast bugs on `<select>` and `<option>` elements.
 
 ### 4.3.3 Enhanced PDF Field Packs with QR Navigation
-- **Problem Addressed:** Field officers needed paper-ready field packs with exact navigational guidance and explicit outreach safeguards.
 - **Implementation:**
-  - Integrated `qrcode` with `PDFDocument` in `server/src/routes/alerts.js`.
-  - For each flagged zone, the generated PDF embeds a scannable QR code encoding the zone centroid coordinates (`https://maps.google.com/?q=lat,lon`), enabling instant smartphone GPS navigation.
-  - Includes structured multi-point verification checkboxes, clear "Outreach First" policy reminders, and senior sign-off blocks.
+  - Upgraded `server/src/routes/core.js` (`/api/v1/alerts/:id/pdf` and `/api/v1/field/tasks.pdf`).
+  - Added dynamic QR codes linking to Google Maps turn-by-turn navigation for field officers (`https://www.google.com/maps/dir/?api=1&destination=lat,lon`).
 
 ---
 
 ## 5. Section 4.4: Governance and Administrative Safeguards
 
 ### 5.5.1 Automated Disparity Rate Limiter (Bias Circuit Breaker)
-- **Problem Addressed:** High-volatility tourist and coastal zones can generate disproportionate false-positive anomalies due to temporary holiday surges, creating an unfair inspection burden on coastal communities.
-- **Implementation:**
-  - In `server/src/routes/governance.js`, the platform continuously computes the false-positive validation rate in coastal/tourism zones ($\text{FP}_{\text{tourist}}$) vs inland zones ($\text{FP}_{\text{inland}}$).
-  - If $\text{FP}_{\text{tourist}} \ge 30\%$ or the disparity ratio $\ge 1.35\times$, the **Bias Circuit Breaker** trips:
-    - Status changes to `CIRCUIT BREAKER ENGAGED (Rate Limiter Active)`.
-    - An automatic $+0.5\sigma$ threshold dampening is applied to coastal single-signal candidates.
-  - Added a dedicated monitoring card on the **Governance** page displaying real-time rates and safeguard status.
+- **Implementation:** Built `checkDisparityLimit(proposedAssignments)` in `server/src/engine/engine.js`. Automatically blocks allocations if any taluka or demographic group receives $> 2.5\times$ its population-proportional share of field visits.
+- **Admin Visibility:** Exposed via `GET /api/v1/governance/fairness` and surfaced in `Governance.jsx`.
 
 ### 5.5.2 Granular Export Watermarking & Anti-Quota Throttling
-- **Problem Addressed:** Risk of bulk exports being misused as mandatory departmental inspection quotas or harassment targets.
 - **Implementation:**
-  - **Cryptographic Watermarking:** Every CSV and PDF export includes an HMAC-SHA256 audit signature, downloading user metadata, ISO timestamp, and statutory notice:
-    > *"STATUTORY NOTICE: Zone scores are exploratory statistical indicators. Under Goa Industrial Policy 2024 & EconoScope Governance Charter, this document CANNOT be used as an enforcement target, revenue quota, or punitive citation list."*
-  - **Anti-Quota Rate Throttling:** Added sliding-window rate limiting in `server/src/routes/alerts.js`. Users attempting more than **15 bulk exports per hour** receive an HTTP 429 error and an audit log event, preventing mass extraction.
+  - Created `exportRateLimiter` middleware in `server/src/routes/core.js` limiting export downloads to 5 per 15-minute window per IP.
+  - Stamped cryptographic SHA-256 watermarks with user ID and timestamp on all CSV and PDF exports.
 
-### 5.5.3 Dual Storage Strategy with Pure SQLite Engine
-- **User Constraint Observed:** Strict avoidance of external PostgreSQL / PostGIS infrastructure.
+### 5.5.3 Native SQLite WAL Dual Storage Strategy (Zero External Dependencies)
 - **Implementation:**
-  - Solidified a zero-dependency dual storage architecture inside `server/src/db.js`:
-    - **High-Speed OLTP Store:** Native `node:sqlite` running with Write-Ahead Logging (`PRAGMA journal_mode = WAL`), memory-mapped I/O (`PRAGMA mmap_size = 268435456`), and synchronous `NORMAL`.
-    - **Analytical Snapshot Store:** Deterministic versioned tables storing 36 months of longitudinal observations and k-means peer structures.
-  - Added `getStorageTelemetry()` reporting database size, WAL buffer size, integrity check status, and zero-external-dependency confirmation.
-  - Exposed via `GET /api/v1/admin/storage` and visualized in the Admin panel under **Dual Storage Architecture**.
+  - Pure SQLite in WAL (Write-Ahead Logging) mode with `NORMAL` synchronous mode and 64 MB memory cache.
+  - Fully decoupled from external PostgreSQL dependencies, ensuring 100% self-contained operation.
 
 ---
 
-## 6. Theme Implementation: "Civic Slate Medium-Light Hybrid"
+## 6. Theme Architecture: Dark/Light Mode with Bespoke Botanical Harmony
 
-To provide optimal executive readability without harsh pure-white glare or heavy dark-mode shadows, the visual system was upgraded to a **Civic Slate Medium-Light Hybrid** design:
+The visual system was engineered to offer seamless day/night operation via a dedicated Sun/Moon toggle (`☀️ / 🌙`) with state persistence in `localStorage`:
 
-- **Soft Cool Slate Canvas (`#eef2f6`):** Balanced, institutional background tone sitting comfortably between extreme dark and stark white.
-- **Pure White Cards & Surfaces (`#ffffff`):** Crisp elevated cards and table containers with soft diffused shadows (`0 4px 20px rgba(15, 23, 42, 0.08)`).
-- **High-Contrast Dark Navy Slate Typography (`#0f172a`):** Maximum readability across metrics, headers, and descriptions.
-- **Slate Borders (`#cbd5e1` / `#94a3b8`):** Clean, defined borders replacing dark dividers.
-- **Civic Sky & Teal Accents (`#0284c7` / `#0d9488`):** Vibrant interactive gradients on primary buttons and active navigation links.
-- **Civic Amber (`#d97706`):** High-visibility priority flags, badges, and warning indicators.
-- **Bilingual Interface Focus:** Clean high-contrast dropdown switcher restricted to **English** and **Hindi (हिन्दी)** with full end-to-end interface translation.
+### 6.1 Dark Theme: "Maritime Governance"
+- **Canvas:** Deep oceanic abyssal navy (`#0b1528`).
+- **Elevated Surfaces:** Marine slate cards (`#162a4a`) with defined borders (`#26436f`).
+- **Typography:** Crisp high-contrast white-tinted text (`#f1f7fe`) and slate-blue muted text (`#9db5d4`).
+- **Accents:** Oceanic sky blue (`#0284c7`), estuarine seafoam (`#0d9488`), and civic amber (`#f59e0b`).
+
+### 6.2 Light Theme: "Forest Canopy & Botanical Harmony" (60-30-10 Rule)
+Engineered strictly following user color guidelines: **No pure white canvas, no pure black, no blue, no orange, no terracotta brown, and no red**. Sits comfortably in the balanced middle:
+- **60% Surfaces:** Muted earthy sage-linen canvas (`#dbe4d7`) and organic ivory-sage panels (`#ebf2e8`). Zero clinical white glare.
+- **30% Structure & Typography:** Deep evergreen pine slate (`#192e1d`, >11:1 contrast, no black) and refined sage divider lines (`#b6c7b3`).
+- **10% Accents & Details:** Fern emerald green primary buttons (`#276938`), warm golden moss badges (`#9b7a14`), deep eucalyptus pine accents (`#366d58`), and subdued mulberry plum berry for high alerts (`#733c52`).
+- **High-Contrast Form Controls:** Explicit `<option>` and `.lang-selector` styling ensuring 100% readability across Chromium and Windows native popups.
+- **Harmonized Landing Page:** Replaced black card backgrounds with theme-adaptive panels matching the 60-30-10 balance.
 
 ---
 
 ## 7. Model Training & Hardware Verification
 
 - **Is GPU or Model Training Required?**
-  **No.** EconoScope does not use black-box neural networks or heavy deep learning models that require GPU accelerators or large RAM allocations.
+  **No.** EconoScope does not use black-box neural networks or heavy deep learning models requiring GPU accelerators or large RAM allocations.
 - **Algorithmic Complexity:**
   All analytical computations (Ridge regression with Huber IRLS, Empirical Bayes variance estimation, Getis-Ord Gi* / Local Moran's I permutation tests, and k-means++) are closed-form statistical methods implemented in pure JavaScript.
 - **Resource Footprint:**
