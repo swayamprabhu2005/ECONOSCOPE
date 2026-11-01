@@ -2,3 +2,9 @@ node_modules/
 client/dist/
 server/data/
 *.log
+
+# Project analysis reference documents & skill folder
+PRD.docx
+Tech Stack and Flow.docx
+GIE.docx
+theme-factory/
