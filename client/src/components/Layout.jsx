@@ -8,10 +8,10 @@ import { getOfflineQueue, isOnline, flushOfflineQueue } from '../lib/offline.js'
 
 export const Logo = ({ size = 30 }) => (
   <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
-    <rect width="32" height="32" rx="7" fill="#1f2027" />
-    <circle cx="14" cy="14" r="7.5" fill="none" stroke="#f0b429" strokeWidth="2.6" />
-    <path d="M19.5 19.5 26 26" stroke="#f0b429" strokeWidth="3" strokeLinecap="round" />
-    <circle cx="14" cy="14" r="2.4" fill="#2ec4b6" />
+    <rect width="32" height="32" rx="7" fill="#0f172a" stroke="#334155" strokeWidth="1" />
+    <circle cx="14" cy="14" r="7.5" fill="none" stroke="#f59e0b" strokeWidth="2.6" />
+    <path d="M19.5 19.5 26 26" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round" />
+    <circle cx="14" cy="14" r="2.4" fill="#14b8a6" />
   </svg>
 );
 
