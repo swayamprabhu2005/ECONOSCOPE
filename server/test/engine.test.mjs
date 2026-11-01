@@ -5,6 +5,7 @@ import { median, robustZ, ridge, robustRidge, seasonalIndex, mulberry32, dot, em
 import { buildPeerGroups } from '../src/engine/peers.js';
 import { localSpatial, changePoint, slope } from '../src/engine/spatial.js';
 import { simulateCounterfactual } from '../src/engine/engine.js';
+import { validateCsvPreflight } from '../src/datasets.js';
 
 const rnd = mulberry32(1);
 const gauss = () => Math.sqrt(-2 * Math.log(Math.max(1e-9, rnd()))) * Math.cos(2 * Math.PI * rnd());
@@ -106,12 +107,28 @@ test('counterfactual simulation calculates registration growth impact and normal
 });
 
 test('empirical bayes pooling dynamically shrinks smaller groups more towards the grand mean', () => {
-  const largeGroup = Array.from({ length: 50 }, () => 0.6 + (Math.random() - 0.5) * 0.1);
-  const smallGroup = Array.from({ length: 4 }, () => 0.9 + (Math.random() - 0.5) * 0.1);
+  const largeGroup = Array.from({ length: 50 }, () => 0.6);
+  const smallGroup = Array.from({ length: 4 }, () => 0.9);
   const eb = empiricalBayesPooling([largeGroup, smallGroup], 0);
 
   assert.equal(eb.length, 2);
   assert.ok(eb[0].shrinkage > eb[1].shrinkage, `large group shrinkage ${eb[0].shrinkage} should exceed small group shrinkage ${eb[1].shrinkage}`);
-  assert.ok(eb[0].offset > 0.5, 'large group offset is close to sample median');
-  assert.ok(eb[1].offset < 0.9, 'small group offset is shrunk towards 0');
+  assert.ok(eb[0].offset > 0.55, 'large group offset is close to sample median');
+  assert.ok(eb[1].offset < 0.85, 'small group offset is shrunk towards 0');
+});
+
+test('csv preflight validator identifies format and validates data structure', () => {
+  const longCsv = 'cell_code,month,metric,value\nGA-0016,2026-08,registered,120';
+  const pfLong = validateCsvPreflight(longCsv);
+  assert.equal(pfLong.format, 'long');
+  assert.ok(pfLong.valid, JSON.stringify(pfLong.errors));
+
+  const wideCsv = 'cell_code,month,registered,night_light\nGA-0016,2026-08,120,4.5';
+  const pfWide = validateCsvPreflight(wideCsv);
+  assert.equal(pfWide.format, 'wide');
+  assert.ok(pfWide.valid, JSON.stringify(pfWide.errors));
+
+  const invalidCsv = 'unknown,headers,here\n1,2,3';
+  const pfInvalid = validateCsvPreflight(invalidCsv);
+  assert.equal(pfInvalid.valid, false);
 });
