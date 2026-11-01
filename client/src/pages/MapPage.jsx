@@ -20,6 +20,7 @@ export default function MapPage() {
   const [mode, setMode] = useState(params.get('mode') === 'shadow' ? 'shadow' : 'map');
   const [month, setMonth] = useState(null);
   const [basemap, setBasemap] = useState('dark');
+  const [gridShape, setGridShape] = useState('square');
   const [showAlerts, setShowAlerts] = useState(true);
   const [mapData, setMapData] = useState(null);
   const [err, setErr] = useState('');
@@ -74,7 +75,7 @@ export default function MapPage() {
   if (cells.error) return <div className="page"><ErrorBox>{cells.error}</ErrorBox></div>;
   const mapProps = {
     cells: cells.data, values, selectedId: selected?.id, onSelect: select, basemap, outline: meta.outline, flyTo: fly, peerGroups: meta.peerGroups,
-    onAlertClick: (a) => nav(`/app/alerts/${a.id}`),
+    onAlertClick: (a) => nav(`/app/alerts/${a.id}`), gridShape,
   };
 
   return (
@@ -110,6 +111,7 @@ export default function MapPage() {
             </select>
           )}
           {mode !== 'table' && <Seg value={basemap} onChange={setBasemap} options={[['dark', 'Street'], ['satellite', 'Satellite']]} />}
+          {mode !== 'table' && <Seg value={gridShape} onChange={setGridShape} options={[['square', 'Square Grid'], ['h3', 'H3 Hexagon']]} />}
           {mode === 'map' && user.role !== 'field_officer' && <label className="row small" style={{ gap: 6 }}><input type="checkbox" checked={showAlerts} onChange={(e) => setShowAlerts(e.target.checked)} /> Show flags</label>}
           <div className="row" style={{ flex: 1, minWidth: 240, gap: 10 }}>
             <button className="btn sm" disabled={mi <= 0} onClick={() => setMonth(months[mi - 1])} aria-label="Previous month">‹</button>

@@ -28,9 +28,9 @@ export function seed({ quiet = false } = {}) {
   const cells = buildCells();
   tx(() => {
     const st = db.prepare(`INSERT INTO cells (code, name, taluka, district, zone, lat, lon, lat_min, lat_max, lon_min, lon_max, area_km2, tourism_share,
-      grid_row, grid_col, dist_centre_km, road_access, sensitive) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
+      grid_row, grid_col, dist_centre_km, road_access, sensitive, h3_index, h3_boundary_json) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
     for (const c of cells) st.run(c.code, c.name, c.taluka, c.district, c.zone, c.lat, c.lon, c.lat_min, c.lat_max, c.lon_min, c.lon_max, c.area_km2, c.tourism_share,
-      c.row, c.col, c.dist_centre_km, c.road_access, c.sensitive);
+      c.row, c.col, c.dist_centre_km, c.road_access, c.sensitive, c.h3_index || null, c.h3_boundary ? JSON.stringify(c.h3_boundary) : null);
   });
   say(`zones: ${cells.length}`);
 

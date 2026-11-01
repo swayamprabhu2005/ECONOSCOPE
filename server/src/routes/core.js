@@ -95,6 +95,10 @@ r.get('/map/:month', requireAuth, (req, res) => {
 r.get('/cells/:id', requireAuth, (req, res) => {
   const cell = get('SELECT * FROM cells WHERE id = ?', req.params.id);
   if (!cell) return res.status(404).json({ error: 'Zone not found' });
+  if (cell.h3_boundary_json) {
+    cell.h3_boundary = JSON.parse(cell.h3_boundary_json);
+    delete cell.h3_boundary_json;
+  }
   const series = all(`SELECT o.month, o.night_light, o.built_up, o.digital_points, o.power_connections, o.listings, o.footfall,
       m.observed, m.observed_sa, m.registered, m.expected, m.exp_lo, m.exp_hi, m.gap_abs, m.gap_z, m.yoy_activity, m.yoy_registered, m.change_z,
       m.seasonal_index, m.eai, m.coverage, m.insufficient, m.insufficient_reason, m.confidence, m.priority, m.tier, m.district_rank,

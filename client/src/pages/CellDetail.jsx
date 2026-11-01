@@ -39,7 +39,7 @@ export default function CellDetail() {
           <h1>{cell.name}</h1>
           <div className="row" style={{ marginTop: 8 }}>
             <TierBadge t={last.tier} />{!insufficient && <SpatialBadge c={last.spatial_class} />}<TrendBadge t={last.gap_trend} />{cell.sensitive ? <SensitiveBadge /> : null}
-            <span className="small muted">{cell.taluka} taluka · {cell.district} · {ZONE_META[cell.zone]} · {cell.area_km2} km²</span>
+            <span className="small muted">{cell.taluka} taluka · {cell.district} · {ZONE_META[cell.zone]} · {cell.area_km2} km²{cell.h3_index ? ` · H3: ${cell.h3_index} (Res 7)` : ""}</span>
           </div>
         </div>
       </div>
