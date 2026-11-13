@@ -6,6 +6,7 @@ import { ThemeToggle } from '../lib/theme.jsx';
 import GridMap from '../components/GridMap.jsx';
 import ModelExplainer, { ALERT_KINDS } from '../components/ModelExplainer.jsx';
 import { useAuth } from '../lib/auth.jsx';
+import { api } from '../lib/api.js';
 
 export default function Landing() {
   const { user, logout } = useAuth();
@@ -13,7 +14,7 @@ export default function Landing() {
   const [preview, setPreview] = useState(null);
   const [layer, setLayer] = useState('eai');
   const [gridShape, setGridShape] = useState('h3');
-  useEffect(() => { fetch('/api/public/preview').then((r) => r.json()).then(setPreview).catch(() => {}); }, []);
+  useEffect(() => { api('/public/preview').then(setPreview).catch(() => {}); }, []);
   const appLink = user ? '/app' : '/login';
 
   return (

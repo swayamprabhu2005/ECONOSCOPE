@@ -5,13 +5,16 @@
   "type": "module",
   "scripts": {
     "start": "node --disable-warning=ExperimentalWarning src/index.js",
+    "build": "echo 'Server build complete'",
     "dev": "node --disable-warning=ExperimentalWarning --watch src/index.js",
     "seed": "node --disable-warning=ExperimentalWarning src/seed.js",
     "test": "node --disable-warning=ExperimentalWarning --test --test-concurrency=1 test/engine.test.mjs test/api.test.mjs"
   },
+  "engines": {
+    "node": ">=22.5.0"
+  },
   "dependencies": {
     "cors": "^2.8.5",
-    "econoscope": "file:..",
     "express": "^4.21.2",
     "h3-js": "^4.5.0",
     "jsonwebtoken": "^9.0.2",
